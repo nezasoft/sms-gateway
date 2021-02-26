@@ -1,0 +1,18 @@
+<soapenv:Envelope
+	xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+	xmlns:v2="http://www.huawei.com.cn/schema/common/v2_1"
+	xmlns:loc="http://www.csapi.org/schema/parlayx/sms/receive/v2_2/local">
+	<soapenv:Header>
+		<v2:RequestSOAPHeader>
+			<v2:spId>602078</v2:spId>
+			<v2:spPassword>c8MBwxYqX2XovYaj0egnrXyDYpbnPBGdixaxih4wJns=</v2:spPassword>
+			<v2:serviceId>35000001000001</v2:serviceId>
+			<v2:timeStamp>20181212113107</v2:timeStamp>
+		</v2:RequestSOAPHeader>
+	</soapenv:Header>
+	<soapenv:Body>
+		<loc:getReceivedSms>
+			<loc:registrationIdentifier>1234</loc:registrationIdentifier>
+		</loc:getReceivedSms>
+	</soapenv:Body>
+</soapenv:Envelope>

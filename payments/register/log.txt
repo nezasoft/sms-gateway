@@ -1,0 +1,256 @@
+{
+                    "requestId":"25595-6223535-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - ACCESS_TOKEN"
+                }
+            
+{
+                    "requestId":"20376-6225426-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - ACCESS_TOKEN"
+                }
+            
+{
+                    "requestId":"20371-6225496-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - ACCESS_TOKEN"
+                }
+            
+{
+                    "requestId":"20371-6228413-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - ACCESS_TOKEN"
+                }
+            
+{
+                    "requestId":"18139-5526507-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - Safaricom534!"
+                }
+            
+{
+                    "requestId":"18132-5533823-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - Invalid access token"
+                }
+            
+{
+                    "requestId":"15094-3395295-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - JRIxfYlmk/A6AvZ/nF2qhxNU2gSlB7q1fNsgkFLBedTFOB4x8nKfeIjS4Lv8w5bpvxT5vjC2IlqQ+74U2QaOrm6tO1hekhUgVwUZbXeFGFAdHjAsf8hZMicm/Q1s5+EwFPVDtiajM+nhVb1Kduhx9TccpLHtZm9yjslKGM8y6cRPczQCUKEMaWECkuiaP6QtvW5KgVGuEw2Zv//ht//YfX9e8Goerpl8AvbvlRI2D7Hc5DuUfF7m9rdgUKhFnh6lutT9MGuGbgbdd4t5R+fu17lyHwkda7Uvn5dVy9Z6R8eeh7zu962vP6ocAmyQ1KWUfKQl+jBpkeTHAWRA+yNkGw=="
+                }
+            
+{
+                    "requestId":"15095-3396254-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - Invalid access token"
+                }
+            
+{
+            "ConversationID": "",
+            "OriginatorCoversationID": "",
+            "ResponseDescription": "success"
+        }
+        
+{
+            "ConversationID": "",
+            "OriginatorCoversationID": "",
+            "ResponseDescription": "success"
+        }
+        
+{
+            "ConversationID": "",
+            "OriginatorCoversationID": "",
+            "ResponseDescription": "success"
+        }
+        
+{
+                    "requestId":"15098-4531241-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - Invalid access token"
+                }
+            
+{
+            "ConversationID": "",
+            "OriginatorCoversationID": "",
+            "ResponseDescription": "success"
+        }
+        
+{
+                    "requestId":"18434-4774885-1",
+                    "errorCode": "400.003.02",
+                    "errorMessage": "Bad Request - Invalid ValidationURL - URL has the word MPESA"
+                }
+            
+{
+                    "requestId":"27746-4723673-1",
+                    "errorCode": "400.003.02",
+                    "errorMessage": "Bad Request - Invalid ValidationURL - URL has the word MPESA"
+                }
+            
+{
+                    "requestId":"25634-4854109-1",
+                    "errorCode": "400.003.02",
+                    "errorMessage": "Bad Request - Invalid ValidationURL - URL has the word MPESA"
+                }
+            
+{
+                    "requestId":"27749-11177349-1",
+                    "errorCode": "400.003.02",
+                    "errorMessage": "Bad Request - Invalid ValidationURL - URL has the word MPESA"
+                }
+            
+{
+            "ConversationID": "",
+            "OriginatorCoversationID": "",
+            "ResponseDescription": "success"
+        }
+        
+{
+            "ConversationID": "",
+            "OriginatorCoversationID": "",
+            "ResponseDescription": "success"
+        }
+        
+{
+            "ConversationID": "",
+            "OriginatorCoversationID": "",
+            "ResponseDescription": "success"
+        }
+        
+{
+                    "requestId":"25644-14604389-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - Invalid access token"
+                }
+            
+{
+                    "requestId":"27746-14498161-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - Invalid access token"
+                }
+            
+{"Envelope":{"encodingStyle":"http:\/\/schemas.xmlsoap.org\/soap\/encoding\/","Body":{"Fault":{"faultcode":"soap:Server","faultstring":"Execution of ServiceCallout SCO-AddURLVault failed. Reason: ResponseCode 500 is treated as error","faultactor":{},"detail":{"source":{"errorcode":"steps.servicecallout.ExecutionFailed"}}}}}}
+{
+                    "requestId":"27746-14503122-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - Invalid access token"
+                }
+            
+{
+                    "requestId":"1926-14670508-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - Invalid access token"
+                }
+            
+{
+                    "requestId":"1936-14676837-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - Invalid access token"
+                }
+            
+{
+            "ConversationID": "",
+            "OriginatorCoversationID": "",
+            "ResponseDescription": "success"
+        }
+        
+{
+                    "requestId":"25634-14809861-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - Invalid access token"
+                }
+            
+{
+                    "requestId":"27747-14528725-1",
+                    "errorCode": "400.003.02",
+                    "errorMessage": "Bad Request - Invalid ValidationURL"
+                }
+            
+{
+                    "requestId":"1936-14696405-1",
+                    "errorCode": "400.003.02",
+                    "errorMessage": "Bad Request - Invalid ValidationURL"
+                }
+            
+{
+                    "requestId":"27746-18666828-1",
+                    "errorCode": "400.003.02",
+                    "errorMessage": "Bad Request - Invalid ValidationURL"
+                }
+            
+{
+                    "requestId":"29784-52897314-1",
+                    "errorCode": "400.003.02",
+                    "errorMessage": "Bad Request - Invalid ValidationURL"
+                }
+            
+{
+                    "requestId":"29784-52898359-1",
+                    "errorCode": "500.003.1001",
+                    "errorMessage": "Duplicate notification info, SP ID is 100839, correlator is 332500"
+                }
+            
+{
+                    "requestId":"20952-52573276-1",
+                    "errorCode": "500.003.1001",
+                    "errorMessage": "Duplicate notification info, SP ID is 100839, correlator is 332500"
+                }
+            
+{
+                    "requestId":"20951-52594576-1",
+                    "errorCode": "500.003.1001",
+                    "errorMessage": "Duplicate notification info, SP ID is 100839, correlator is 332500"
+                }
+            
+{
+                    "requestId":"29791-53830944-1",
+                    "errorCode": "401.003.01",
+                    "errorMessage": "Error Occurred - Invalid Access Token - Invalid access token"
+                }
+            
+{
+                    "requestId":"23383-28583416-1",
+                    "errorCode": "500.003.1001",
+                    "errorMessage": "Duplicate notification info, SP ID is 100839, correlator is 332500"
+                }
+            
+{
+                    "requestId":"28600-55567893-1",
+                    "errorCode": "500.003.1001",
+                    "errorMessage": "Duplicate notification info, SP ID is 100839, correlator is 332500"
+                }
+            
+{
+            "ConversationID": "",
+            "OriginatorCoversationID": "",
+            "ResponseDescription": "success"
+        }
+        
+{
+                    "requestId":"22716-57587975-1",
+                    "errorCode": "500.003.1001",
+                    "errorMessage": "Saving notification info fail, the record is ===================Value Begin=======================
+innerIndex:0
+spId:100839
+serviceId:100839000
+correlator:332500
+scfType:0
+protocolType:9
+endpoint:https://10.195.1.154/mpesa/internal/c2b/v1/validate
+criteria:ValidationURL
+address:
+expiredTime:2147483647
+southBoundId:
+notificationFormat:
+resourceId:22716-57587975-1
+===================Value End=======================
+"
+                }
+            
+{
+            "ConversationID": "",
+            "OriginatorCoversationID": "",
+            "ResponseDescription": "Validation and Confirmation URLs are already registered"
+        }
+        

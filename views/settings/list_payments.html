@@ -1,0 +1,365 @@
+<?php
+include("../../connect/connect.php");
+ini_set("display_errors",true);
+//Bill Info
+$bill = $conn->prepare("SELECT cb.id AS assign_id, cb.amount,sp.rate, cb.balance, cb.activation_date, cb.expiry_date, sp.package_name, c.company_name FROM client_bulk_sms AS cb LEFT JOIN sms_package AS sp ON sp.id = cb.sms_package_id LEFT JOIN company AS c ON c.id = cb.client_id WHERE cb.client_id='".$_SESSION['FON_G_COMPANY_ID']."' LIMIT 1");
+$bill->execute();
+$bill=$bill->fetch(PDO::FETCH_ASSOC);
+$client_name = $bill['company_name'];
+$package_name = $bill['package_name'];
+$rate = $bill['rate'];
+$amount = $bill['amount'];
+$total = $rate * $amount;
+
+?>
+<div style="background-color:#fff;padding:5px;">
+<div style="margin:10px;">
+<div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+<div class="breadcome-heading">
+<form role="search" class="sr-input-func">
+<input type="text" id="suggest_payment" placeholder="Search..." class="search-int form-control">
+<a href="#"><i class="fa fa-search"></i></a>
+</form>
+</div>
+</div>
+
+<div class="button-ap-list responsive-btn">
+<div class="btn-group btn-custom-groups btn-custom-groups-one btn-mg-b-10">
+<button style="margin-right:30px;" type="button" id="add_new_short_code" class="btn btn-primary" data-toggle="modal" data-target="#PrimaryModalhdbgcl"><i class="fa fa-plus-square " aria-hidden="true"></i> Make Payment</button>
+<select name="filter"  class="form-control" style="width:100px;margin-right:50px;" id="filter">
+<option selected value="">Default</option>
+<option   value="50">50</option>
+<option value="100">100</option>
+<option value="200">200</option>
+</select>
+</div>
+</div>
+</div><hr/>
+<script type="text/javascript">
+        //lets have a function to auto suggest searches invoices
+        $(document).ready(function(){
+		$('#loader_suggest').hide();
+        $('#suggest_list').hide();
+        $('#suggest_list_div').hide();  
+        //Minimum no of sms someone can purchases
+         min_sms = 5000;		
+        $("#suggest_group").keyup(function(e){
+            e.preventDefault(); 
+           $('#loader_suggest').show();			
+            //hide table data
+            $("#table_content_section").hide();
+            //hide pagination
+            $("#paginated_data").hide();
+            //hide records found
+            $("#rec_found").hide();
+            var min_length = 1; // min caracters to display the autocomplete
+            var keyword = $('#suggest_payment').val();
+            if (keyword.length >= min_length) {
+                $.ajax({
+                    url: '../process/suggest_payment.php',
+                    type: 'POST',
+                    data: {keyword:keyword},
+                    success:function(data){
+					    $('#loader_suggest').hide();
+                        //show suggestions
+                        $('#suggest_list_div').show();
+                        $('#suggest_list').show();
+                        $('#suggest_list').html(data);
+						
+                    }
+                });
+            }else{
+			    $('#loader_suggest').hide();
+                //hide suggestions
+                $('#suggest_list').hide();
+                $('#suggest_list_div').hide();
+                //show table data
+                getdata(1);
+                $("#table_content_section").show();
+                //show pagination
+                $("#paginated_data").hide();
+                //show records found
+                $("#rec_found").show();
+            }
+
+        });
+       function selectItem(val) {
+		$("#suggest_group").val(val);
+		$("#suggest_list_div").hide();
+		}
+        function set_item(item) {
+            // change input value
+            $('#suggest_payment').val(item);
+            // hide proposition list
+            $('#suggest_payment').hide();
+        }
+    });
+    $(document).keypress(
+     function(event){
+     if(event.which == '13') {
+     event.preventDefault();
+     }
+   });
+</script>
+<div id="PrimaryModalhdbgcl" class="modal modal-edu-general default-popup-PrimaryModal fade" role="dialog">
+  <div class="modal-dialog">
+  <div class="modal-content">
+  <div class="modal-close-area modal-close-df">
+  <a class="close" data-dismiss="modal" href="#"><i class="fa fa-close"></i></a>
+</div> 
+<div style="background-color:#fff;padding:5px;">
+<div id="form_content" style=" margin-left:10px;margin-right:10px;margin-top:5px;">
+ <div id="form_section">
+ <strong>Make Payment</strong><hr/>
+<img src="../img/lipanampesa.png" width="250" height="40"/> <br/> 
+<strong>Bill Info</strong><hr/>
+<div class="alert alert-info alert-success-style2 alert-st-bg1 alert-st-bg12">
+ <button type="button" class="close sucess-op" data-dismiss="alert" aria-label="Close">
+	<span class="icon-sc-cl" aria-hidden="true">&times;</span>
+</button>
+ <i class="fa fa-info-circle edu-inform admin-check-pro admin-check-pro-clr1 admin-check-pro-clr12" aria-hidden="true"></i>
+ <p><strong>Company Name: </strong> <?php  echo titleCase($client_name);?>  </p>
+ <p><strong>Package: </strong> <?php  echo titleCase($package_name);?>  </p>
+ <p><strong>No of SMS: </strong> <?php  echo number_format($amount);?>  </p>
+ <p><strong>Rate Per SMS: </strong> <?php  echo number_format($rate,2,".",",");?>  </p>
+ <p><strong>Total Amount: </strong> <?php  echo number_format($total,2,".",",");?>  </p>
+ </div>
+                           
+    <strong>Mobile No:</strong>
+   <div  class="form-group edit-ta-resize res-mg-t-15">
+    <input type="text" class="form-control" id="mobile_no"/>
+   <strong><font color="red">Mobile No MUST be in the format 254721123456</font></strong>
+   <div style="color:red;" class="mobile_no_error">*Mobile No</div>
+   </div>
+   <strong>Quantity:</strong>
+   <div  class="form-group edit-ta-resize res-mg-t-15">
+    <input type="text" class="form-control" id="qty" value="<?php echo $amount; ?>"/>
+   <div style="color:red;" class="qty_error">*Quantity</div>
+   </div>
+    <strong>Amount:</strong>
+   <div  class="form-group edit-ta-resize res-mg-t-15">
+    <input type="text" class="form-control" disabled value="<?php echo $total; ?>"  id="amount"/>
+   <div style="color:red;" class="amount_error">*Amount</div>
+   </div>
+      
+		<br/>
+   
+         <button id="save" class="btn btn-success"><i class="fa fa-save"></i> Save</button> 
+         <a id="loader"><img src="../img/loader.gif" width="40" height="40" />Saving...</a> <br/>
+         </div><br/>
+         <div id="response"></div> <br/>
+         <div id="server_response"></div>
+	     </div>
+	     </div>
+        <script>
+    
+        $(document).ready(function(){
+		
+        $("#loader").hide();
+        $(".mobile_no_error").hide();
+        $(".qty_error").hide();
+		$(".amount_error").hide();
+		
+		//Validate phone no on focus out
+		$("#mobile_no").focusout(function(){
+		  var phoneno = /^\+?([0-9]{3})\)?([0-9]{3})?([0-9]{6})$/;
+		  mobile_no = $("#mobile_no").val();
+		  if((mobile_no.match(phoneno))){
+          $("#response").removeClass("alert alert-danger");
+		  $("#response").empty();
+		   }else{
+		   $("#mobile_no").focus();
+		   $("#mobile_no").css("border-color","red");
+           $("#response").addClass("alert alert-danger");
+		   $("#response").text("Invalid mobile no. Valid phone no must be in the format 254720123456");
+		   }
+		});
+		
+		$("#qty").focusout(function(){
+		
+		if(qty<min_sms){
+		error = true;
+           $("#qty").focus();
+		   $("#qty").css("border-color","red");
+           $("#response").addClass("alert alert-danger");
+		   $("#response").text("A minimum of 5000 SMS is required");
+		
+		}else{
+		 error = false;
+		 $("#qty").css("border-color","green");
+		 $("#response").remove();
+		 $("#response").empty();
+		}
+		
+		});
+		
+		//Qty change event
+		$("#qty").keyup(function(){
+		rate = <?php echo $rate; ?>;
+		qty = $("#qty").val();
+		total = rate * qty;
+		
+		$("#amount").val(total);
+		
+		});
+     
+        //Save content
+        $("#save").click(function(e){
+        e.preventDefault();
+        $("#response").empty();
+        mobile = $("#mobile_no").val();
+        qty= $("#qty").val();
+	amount= $("#amount").val();
+        package_name = "<?php echo titleCase($package_name); ?>";
+        error = false;
+        
+       // alert(package_name);
+        if(mobile===''){
+        error = true;
+        $(".mobile_no_error").show();
+        $("#mobile_no").css("border-color","red");
+        $("#mobile_no").focus();
+        }else{
+        $("#mobile_no").css("border-color","green");
+        $(".mobile_no_error").hide();
+        }
+        
+        if(qty===null){
+        error = true;
+        $(".qty_error").show();
+        $("#qty").css("border-color","red");
+        $("#qty").focus();
+        }else{
+        $("#qty").css("border-color","green");
+        $(".qty_error").hide();
+        }
+		
+		if(amount===null){
+        error = true;
+        $(".amount_error").show();
+        $("#amount").css("border-color","red");
+        $("#amount").focus();
+        }else{
+        $("#amount").css("border-color","green");
+        $(".amount_error").hide();
+        }
+		//Check if qty of sms is more than what is required
+		if(qty<min_sms){
+		error = true;
+           $("#qty").focus();
+		   $("#qty").css("border-color","red");
+           $("#response").addClass("alert alert-danger");
+		   $("#response").text("A minimum of 5000 SMS is required");
+		
+		}else{
+		 $("#qty").css("border-color","green");
+		 $("#response").remove();
+		 $("#response").empty();
+		}
+             
+
+             //Validate phone no on submit
+              
+                  var phoneno = /^\+?([0-9]{3})\)?([0-9]{3})?([0-9]{6})$/;
+                  mobile_no = $("#mobile_no").val();
+                  if((mobile_no.match(phoneno))){
+                $("#response").removeClass("alert alert-danger");
+                 error = false;
+                  $("#response").empty();
+                 
+                   }else{
+                   $("#mobile_no").focus();
+                   $("#mobile_no").css("border-color","red");
+                   $("#response").addClass("alert alert-danger");
+                   $("#response").text("Invalid mobile no. Valid phone no must be in the format 254720123456");
+                   error = true;
+                   }
+              
+
+
+        
+        //Send request to server for processing if no errors
+			if(error == false){
+			//Hide Button
+			$("#save").hide();
+			$("#server_response").empty();
+			//Show loader
+			$("#loader").show();
+			myData = "mobile=" + mobile + "&qty=" + qty + "&amount=" + amount + "&package_name=" + package_name;
+			jQuery.ajax({
+			type: "POST",
+			url: "../payments/stkpush/index.php",
+			dataType: "text",
+			data: myData,
+			success: function(b) {
+			$("#server_response").append(b);
+			$("#loader").hide();
+			$("#save").show();
+			$("#server_response").show();
+			}
+			});
+
+			}
+        
+        });
+        });
+       </script>
+
+   																						
+                                </div>
+                            </div>
+                        </div>
+
+
+<div id="suggest_list_div"><ul id="suggest_list"></ul></div><br/>
+<div id="loader_suggest"><img src="../img/loader.gif" width="30" height="30" /><h5>Searching...</h5></div>
+<div id="table_content_section">
+<h4>Contact Groups</h4><hr/>
+<div id="loader_groups_1"><img src="../img/loader.gif" width="40" height="40" /><h4>Loading data, please wait...</h4></div>           
+<div id="groups_data"></div>
+</div>
+</div>			
+			<script>
+			$(document).ready(function(){
+                        $("#loader_groups_1").hide();			
+				getdata(1);
+				function getdata(pageno){
+				$("#loader_groups_1").show();
+				// source of data	
+				var myData = 'page=' + pageno;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "../views/settings/loads/group_contacts.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#groups_data").html(response);
+			     $("#loader_groups_1").hide();
+                 }
+			 });
+			}		
+			});						
+			//filter change event
+			$("#filter").change(function(){
+			$("#groups_data_1").empty();
+			filter_val = $("#filter").val();
+			pageno = 1;
+			$("#loader_groups_1").show();
+				// source of data	
+				var myData = 'page=' + pageno + '&filter=' + filter_val;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "../views/settings/loads/group_contacts.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#groups_data").html(response);
+			     $("#loader_groups_1").hide();
+                 }
+				});
+			});
+</script>
+
+						
+						
+

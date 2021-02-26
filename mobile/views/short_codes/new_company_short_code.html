@@ -1,0 +1,238 @@
+<?php
+include("../../connect/connect.php");
+
+//Lets select all companies that are active
+$companies = $conn->prepare("SELECT id AS company_id, company_name FROM company WHERE status='1' ORDER BY company_name ASC");
+$companies->execute();
+$company_rows = $companies->fetchAll(PDO::FETCH_ASSOC);
+//Lets get all short codes
+$short_codes = $conn->prepare("SELECT id AS short_code_id,short_code,short_code_description FROM short_codes ORDER BY short_code, short_code_description ASC");
+$short_codes->execute();
+$short_code_rows = $short_codes->fetchAll(PDO::FETCH_ASSOC);
+?>   
+   <div style="background-color:#fff;padding:5px;">
+                          <div id="form_content" style="padding:10px; margin:20px;">
+                                    <div class="modal-header header-color-modal bg-color-1">
+                                        <h4 class="modal-title">Assign Company Short Code  </h4>                                    
+                                    </div>
+                                    <div class="modal-body"> 
+                                     		<div class="alert alert-info">
+                                         * The sender name must same as the one's generated on the Safaricom's SDP during service creation.<br/>
+                                         * The end should be in the format <strong>http://192.168.20.230/gateway/notify/fon/short_code/6027/internet/</strong><br/>
+                                         * In the notify folder create a folder for the company providing the service. In this case for Frontier its "fon"<br/>
+                                         * For short code services create another folder "short_code" in the "fon" folder<br/>
+                                         * Create a folder after the short code no in the "short_code" folder ie "6027"<br/>
+                                         * Finally create a folder after keyword in this folder eg for internet name it "internet" or "balance"<br/>
+                                         * For bulk sms use the following end point <strong>http://192.168.20.230/gateway/notify/sendsms<br/>
+                                          </div>							
+                                          <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Company</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                               <select id="company" class="form-control" name="company">
+                                                               <option value="">--Select Company--</option>
+                                                               <?php 
+                                                               foreach($company_rows as $company_row){
+                                                               ?>
+                                                               <option value="<?php echo $company_row['company_id']; ?>"><?php echo titleCase($company_row['company_name']); ?></option>
+                                                               <?php                                             
+                                                               }                                                             
+                                                               
+                                                               ?>
+                                                               </select> 
+																          <span class="company_error"><font color="red">* Select company </font></span>
+                                                            </div>
+                                                        </div>
+                                           </div>
+                                           
+                                           <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Short Code</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                               <select id="short_code" class="form-control" name="short_code">
+                                                               <option value="">--Select Short Code--</option>
+                                                               <?php 
+                                                               foreach($short_code_rows as $short_code_row){
+                                                               ?>
+                                                               <option value="<?php echo $short_code_row['short_code_id']; ?>"><?php echo $short_code_row['short_code'].'-'.$short_code_row['short_code_description']; ?></option>
+                                                               <?php                                             
+                                                               }                                                             
+                                                               
+                                                               ?>
+                                                               </select> 
+																          <span class="short_code_error"><font color="red">* Select short code </font></span>
+                                                            </div>
+                                                        </div>
+                                           </div>
+                                           <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Keyword</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="text" class="form-control" name="keyword" id="keyword"/> 
+																            <span class="keyword_error"><font color="red">* Enter application keyword  </font></span>
+                                                            </div>
+                                                        </div>
+                                           </div>
+                                           <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">End Point URl</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="text" class="form-control" name="endpoint" id="endpoint"/> 
+																            <span class="endpoint_error"><font color="red">* Enter the endpoint url.  </font></span>
+                                                            </div>
+                                                        </div>
+                                           </div>
+                                           <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Response Message</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                              
+                                                                <textarea name="message" id="message" class="form-control"></textarea>
+																<span class="message_error"><font color="red">* Enter the response to issue mobile user </font></span>
+                                                            </div>
+                                                        </div><br/>
+                                                        
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Sender Name</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="text" class="form-control" name="sender_name" id="sender_name"/> 
+															                         	<span class="sender_name_error"><font color="red">* Enter sender name </font></span>
+                                                            </div>
+                                                        </div>
+                                                      </div>
+                                           </div>
+                                           <div style="margin:20px; padding:20px;">
+									                        <span id="loader"><img src="../img/loader.gif" width="50" height="50" /></span>                                                                         
+                                <button class="btn btn-primary" id="save">Save</button>							
+										
+								    </div>
+                                    </div>
+                                    
+										
+									<div style="margin:20px; padding:20px;" id="response"></div>
+									</div>
+									
+</div>									
+<script>
+
+$(document).ready(function(){  
+$("#loader").hide();
+$(".company_error").hide();
+$(".short_code_error").hide();
+$(".endpoint_error").hide();
+$(".message_error").hide();
+$(".keyword_error").hide();
+$(".sender_name_error").hide();
+$("#save").click(function(){
+$("#response").empty();
+company = $("#company").val();
+short_code = $("#short_code").val();
+endpoint = $("#endpoint").val();
+response_message = $("#message").val();
+sender_name = $("#sender_name").val();
+keyword = $("#keyword").val();
+error = false;
+ if(company===''){
+	$(".company_error").show();
+	$("#company").css("border-color","red");
+	error = true;
+	}else{
+	$(".company_error").hide();
+	$("#company").css("border-color","green");
+	}
+	if(short_code===''){
+	$(".short_code_error").show();
+	$("#short_code").css("border-color","red");
+	error = true;
+	}else{
+	$(".short_code_error").hide();
+	$("#short_code").css("border-color","green");
+	}
+	
+	if(endpoint===''){
+	$(".endpoint_error").show();
+	$("#endpoint").css("border-color","red");
+	error = true;
+	}else{
+	$(".endpoint_error").hide();
+	$("#endpoint").css("border-color","green");
+	}
+	
+	if(response_message===''){
+	$(".message_error").show();
+	$("#message").css("border-color","red");
+	error = true;
+	}else{
+	$(".message_error").hide();
+	$("#message").css("border-color","green");
+	}
+if(sender_name===''){
+$(".sender_name_error").show();
+$("#sender_name").css("border-color","red");
+error = true;
+}else{
+$(".sender_name_error").hide();
+$("#sender_name").css("border-color","green");
+}
+/*
+	if(keyword===''){
+	$(".keyword_error").show();
+	$("#keyword").css("border-color","red");
+	error = true;
+	}else{
+	$(".keyword_error").hide();
+	$("#keyword").css("border-color","green");
+	}*/
+//Send request to server for processing if no errors
+if(error == false){
+//Hide Button
+$("#save").hide();
+//Show loader
+$("#loader").show();
+	
+myData = "company=" + company + "&short_code=" + short_code + "&endpoint=" + endpoint + "&message=" + response_message + "&keyword=" + keyword + "&sender_name=" + sender_name;
+jQuery.ajax({
+type: "POST",
+url: "../process/add_company_short_code.php",
+dataType: "text",
+data: myData,
+success: function(b) {
+$("#response").append(b);
+$("#loader").hide();
+$("#save").show();
+$("#response").show();
+}
+});
+
+}
+
+});
+
+$("#cat_name").focusout(function(){
+cat_name = $("#cat_name").val();
+error = false;
+	if(cat_name===''){
+	$(".cat_name_error").show();
+	$("#cat_name").css("border-color","red");
+	error = true;
+	}else{
+	error = false;
+	$(".cat_name_error").hide();
+	$("#cat_name").css("border-color","green");
+	}
+	});
+});
+</script>
+									

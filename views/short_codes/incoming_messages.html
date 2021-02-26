@@ -1,0 +1,152 @@
+<?php
+$short_code = $_GET['short_code'];
+
+?>
+<div class="col-md-9 col-md-9 col-sm-9 col-xs-12"> 
+                        <div class="hpanel">
+                            <div class="panel-heading hbuilt mailbox-hd">
+                                <div class="text-center p-xs font-normal">
+                                    <div class="input-group">
+                                        <input type="text" id="suggest_message" class="form-control input-sm" placeholder="Search received messages using mobile no or status..."> <span class="input-group-btn active-hook"> <button type="button" class="btn btn-sm btn-default">Search
+											</button> </span></div>
+                                </div>
+                                <div id="suggest_list_div"><ul id="suggest_list"></ul></div><br/>
+                               <div id="loader_suggest"><img src="../img/loader.gif" width="30" height="30" /><strong>Searching...</strong></div>
+                            </div>
+                            <div class="panel-body" id="table_content_section">
+                                <div class="row">
+                                    <div class="col-md-6 col-md-6 col-sm-6 col-xs-8">
+                                        <div class="btn-group ib-btn-gp active-hook mail-btn-sd mg-b-15">
+                                            <button class="btn btn-default btn-sm" onclick="getdata(1)"><i class="fa fa-refresh"></i> Refresh</button>
+                                        </div>
+                                        <div class="btn-group ib-btn-gp active-hook mail-btn-sd mg-b-15">
+                                            <button class="btn btn-default btn-sm"  id="download"><i class="fa fa-download"></i> Export</button>
+                                        </div>
+                                    </div>                                 
+                                    <strong>Filter:</strong>
+                                   <div class="btn-group btn-custom-groups btn-custom-groups-one btn-mg-b-10">
+                                   <select name="filter"  class="form-control" style="width:100px;margin-right:50px;" id="filter">
+                                   <option selected value="">Default</option>
+                                   <option   value="50">50</option>
+                                   <option value="100">100</option>
+                                   <option value="200">200</option>
+                                   </select>
+                                   </div>
+                                   
+                                </div>
+                                <div id="loader_message"><img src="../img/loader.gif" width="30" height="30" /><strong>Loading messages...</strong></div>           
+                                <div id="incoming_messages_content">
+                                
+                                </div>
+
+
+                               
+                            </div>
+                            
+                        </div>
+                    </div>
+<script type="text/javascript">
+//lets have a function to auto suggest searches invoices
+     $(document).ready(function(){
+     $('#loader_message').hide();
+		$('#loader_suggest').hide();
+        $('#suggest_list').hide();
+        $('#suggest_list_div').hide();      
+        $("#suggest_message").keyup(function(e){
+            e.preventDefault(); 
+           $('#loader_suggest').show();			
+            //hide table data
+            $("#table_content_section").hide();
+            //hide pagination
+            $("#paginated_data").hide();
+            //hide records found
+            $("#rec_found").hide();
+            var min_length = 1; // min caracters to display the autocomplete
+            var keyword = $('#suggest_message').val();
+            if (keyword.length >= min_length) {
+                $.ajax({
+                    url: '../process/suggest_incoming_message.php',
+                    type: 'POST',
+                    data: {keyword:keyword},
+                    success:function(data){
+					    $('#loader_suggest').hide();
+                        //show suggestions
+                        $('#suggest_list_div').show();
+                        $('#suggest_list').show();
+                        $('#suggest_list').html(data);
+						
+                    }
+                });
+            }else{
+			    $('#loader_suggest').hide();
+                //hide suggestions
+                $('#suggest_list').hide();
+                $('#suggest_list_div').hide();
+                //show table data
+                $("#table_content_section").show();
+                //show pagination
+                $("#paginated_data").hide();
+                //show records found
+                $("#rec_found").show();
+            }
+
+        });
+       function selectItem(val) {
+		$("#suggest_message").val(val);
+		$("#suggest_list_div").hide();
+		}
+        function set_item(item) {
+            // change input value
+            $('#suggest_message').val(item);
+            // hide proposition list
+            $('#suggest_list').hide();
+        }
+    });
+    $(document).keypress(
+     function(event){
+     if(event.which == '13') {
+     event.preventDefault();
+     }
+   });
+</script>
+<script>
+			$(document).ready(function(){
+			  $("#loader_message").show();
+				getdata(1);
+				function getdata(pageno){
+				$("#incoming_messages_content").empty();
+				// source of data	
+        short_code
+				var myData = 'page=' + pageno + '&short_code='+<?php echo $short_code; ?>;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "../views/short_codes/loads/incoming_messages.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#incoming_messages_content").html(response);
+			    $("#loader_message").hide();
+             }
+			 });
+			}		
+			});						
+			//filter change event
+			$("#filter").change(function(){
+			$("#incoming_messages_content").empty();
+			filter_val = $("#filter").val();
+			pageno = 1;
+      short_code = <?php  echo $short_code; ?>;
+			$("#loader_message").show();
+				// source of data	
+				var myData = 'page=' + pageno + '&filter=' + filter_val + '&short_code='+short_code;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "../views/short_codes/loads/incoming_messages.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#incoming_messages_content").html(response);
+			    $("#loader_message").hide();
+             }
+				});
+			});

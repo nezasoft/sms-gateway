@@ -1,0 +1,165 @@
+<?php
+include("../../connect/connect.php");
+
+?>
+<div style="background-color:#fff;padding:5px;">
+<div style="margin:10px;">
+<div class="button-ap-list responsive-btn">
+<div class="btn-group btn-custom-groups btn-custom-groups-one btn-mg-b-10">
+<button style="margin-right:30px;" type="button" id="add_new_user" class="btn btn-primary" data-toggle="modal" data-target="#PrimaryModalhdbgcl"><i class="fa fa-plus-square " aria-hidden="true"></i> Add Category</button>
+<select name="filter"  class="form-control" style="width:100px;margin-right:50px;" id="filter">
+<option selected value="">Default</option>
+<option   value="50">50</option>
+<option value="100">100</option>
+<option value="200">200</option>
+</select>
+</div>
+</div>
+</div><hr/>
+<div id="PrimaryModalhdbgcl" class="modal modal-edu-general default-popup-PrimaryModal fade" role="dialog">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+							
+								<div id="form_content">
+                                    <div class="modal-header header-color-modal bg-color-1">
+                                        <h4 class="modal-title">Add New Category  </h4>                                    
+                                    </div>
+                                    <div class="modal-close-area modal-close-df">
+				     							 <a class="close" data-dismiss="modal" href="#"><i class="fa fa-close"></i></a>
+				     							 </div> 
+                                    <div class="modal-body"> 
+                                     									
+                                          <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Category</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="text" class="form-control" name="cat_name" id="cat_name"/> 
+																<span class="cat_name_error"><font color="red">* Enter category name </font></span>
+                                                            </div>
+                                                        </div>
+                                           </div>
+                                    </div>
+                                    
+									<div style="margin:20px; padding:20px;">
+									    <a id="loader"><img src="../img/loader.gif" width="50" height="50" /></a>                                                                         
+                               <a href="#" class="btn btn-primary" id="save">Save</a>
+						
+										
+								    </div>	
+									
+									</div>
+									<div style="margin:20px; padding:20px;" id="response"></div>
+                                </div>
+                            </div>
+                        </div>
+
+<script>
+
+$(document).ready(function(){  
+$("#loader").hide();
+$(".cat_name_error").hide();
+
+$("#save").click(function(){
+$("#response").empty();
+cat_name = $("#cat_name").val();
+error = false;
+ if(cat_name===''){
+	$(".cat_name_error").show();
+	$("#cat_name").css("border-color","red");
+	error = true;
+	}else{
+	error = false;
+	$(".cat_name_error").hide();
+	$("#cat_name").css("border-color","green");
+	}
+//Send request to server for processing if no erros
+if(error == false){
+//Hide Button
+$("#save").hide();
+//Show loader
+$("#loader").show();
+	
+myData = "cat_name=" + cat_name;
+jQuery.ajax({
+type: "POST",
+url: "../process/add_product_category.php",
+dataType: "text",
+data: myData,
+success: function(b) {
+$("#response").append(b);
+$("#loader").hide();
+$("#save").show();
+$("#response").show();
+}
+});
+
+}
+
+});
+
+$("#cat_name").focusout(function(){
+cat_name = $("#cat_name").val();
+error = false;
+	if(cat_name===''){
+	$(".cat_name_error").show();
+	$("#cat_name").css("border-color","red");
+	error = true;
+	}else{
+	error = false;
+	$(".cat_name_error").hide();
+	$("#cat_name").css("border-color","green");
+	}
+	});
+});
+</script>
+
+<div id="table_content_section">
+<h4>Product Category</h4><hr/>
+<div id="loader_category"><img src="../img/loader.gif" width="40" height="40" /><h4>Loading data, please wait...</h4></div>           
+<div id="category_data"></div>
+</div>
+</div>			
+			<script>
+			$(document).ready(function(){
+			  $("#loader_category").show();
+				getdata(1);
+				function getdata(pageno){
+				// source of data	
+				var myData = 'page=' + pageno;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "../views/settings/loads/product_categories.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#category_data").html(response);
+			     $("#loader_category").hide();
+                 }
+			 });
+			}		
+			});						
+			//filter change event
+			$("#filter").change(function(){
+			$("#category_data").empty();
+			filter_val = $("#filter").val();
+			pageno = 1;
+			$("#loader_category").show();
+				// source of data	
+				var myData = 'page=' + pageno + '&filter=' + filter_val;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "../views/settings/loads/product_categories.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#category_data").html(response);
+			     $("#loader_category").hide();
+                 }
+				});
+			});
+</script>
+
+						
+						

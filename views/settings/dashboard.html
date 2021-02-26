@@ -1,0 +1,937 @@
+<?php 
+include("../../connect/connect.php");
+if(isset($_GET['year']) && $_GET['year']!=''){
+    $year = sanitize_string($_GET['year']);
+    $year = (int)$year;
+    $date = $year.'-'.date('m-d');
+}else{
+$date = date('Y-m-d');
+$year = date('Y');
+}
+if($_SESSION['FON_G_COMPANY_ID']==2 && $_SESSION['FON_G_LEVEL_ID']==4){ 
+$where = "WHERE company_id LIKE '%%'";
+$where2 = "WHERE csc.company_id LIKE '%%'";
+$where3 = "WHERE id LIKE '%%'";
+$where4 = "WHERE im.company_id LIKE '%%'";
+}else{
+$where = "WHERE company_id ='".$_SESSION['FON_G_COMPANY_ID']."'";
+$where2 = "WHERE csc.company_id ='".$_SESSION['FON_G_COMPANY_ID']."'";
+$where3 = "WHERE id ='".$_SESSION['FON_G_COMPANY_ID']."'";
+$where4 = "WHERE im.company_id='".$_SESSION['FON_G_COMPANY_ID']."'";
+}
+//Lets get statistics
+//SMS Sent
+$count_sms = $conn->prepare("SELECT SUM(sms_count) as total_sent FROM outgoing_messages ".$where."");
+$count_sms->execute();
+$count_sms_rows = $count_sms->fetch(PDO::FETCH_ASSOC);
+$total_sms = $count_sms_rows['total_sent'];
+
+//SMS Received
+$count_incoming_sms = $conn->prepare("SELECT count(*) AS total_sms FROM incoming_messages ".$where."");
+$count_incoming_sms->execute();
+$count_incoming_sms_rows = $count_incoming_sms->fetch(PDO::FETCH_ASSOC);
+$total_incoming_sms = $count_incoming_sms_rows['total_sms'];
+//Users
+$count_users = $conn->prepare("SELECT id,active FROM users ".$where."");
+$count_users->execute();
+$total_users = $count_users->rowCount();
+$users_rows = $count_users->fetchAll(PDO::FETCH_ASSOC);
+$active_count=0;
+$inactive_count =0;
+foreach($users_rows as $user_row){
+if($user_row['active']==1){
+$active_count++;
+}elseif($user_row['active']==0){
+$inactive_count++;
+}
+}
+//Companies
+$companies = $conn->prepare("SELECT id FROM company ".$where3."");
+$companies->execute();
+$company_count = $companies->rowCount();
+
+//Lets get the SMS sent in the last 7 days
+$sent_sms_day = $conn->prepare("SELECT sum(sms_count)total_sms,date_sent,DATE_FORMAT(date_sent,'%D') AS day FROM outgoing_messages ".$where." AND DATE_FORMAT(date_sent,'%Y')='".$year."' AND date_sent >= (DATE(NOW()) - INTERVAL 7 DAY)  GROUP BY EXTRACT(day FROM date_sent) ORDER BY date_sent ASC");
+$sent_sms_day->execute();
+$sent_sms_day_rows = $sent_sms_day->fetchAll(PDO::FETCH_ASSOC);
+
+//echo "SELECT sum(sms_count)total_sms,date_sent,DATE_FORMAT(date_sent,'%D') AS day FROM outgoing_messages ".$where." AND DATE_FORMAT(date_sent,'%Y')='".$year."' AND date_sent >= (DATE(NOW()) - INTERVAL 7 DAY)  GROUP BY EXTRACT(day FROM date_sent) ORDER BY date_sent ASC";                                                                 
+//Lets get the SMS received in the last 7 days
+$sms_received_day = $conn->prepare("SELECT COUNT(*) AS total_sms,msg_date,DATE_FORMAT(msg_date,'%D') AS day FROM incoming_messages 
+										 ".$where." AND DATE_FORMAT(msg_date,'%Y')='".$year."' AND msg_date >= (DATE(NOW()) - INTERVAL 7 DAY)
+										  GROUP BY EXTRACT(day FROM msg_date) ORDER BY msg_date ASC");
+$sms_received_day->execute();
+$sms_received_day_rows = $sms_received_day->fetchAll(PDO::FETCH_ASSOC);
+
+//Lets get the SMS sent and group them by week
+$sent_sms_week = $conn->prepare("SELECT sum(sms_count)total_sms,date_sent,DATE_FORMAT(date_sent,'%U') AS week FROM outgoing_messages 
+".$where." AND DATE_FORMAT(date_sent,'%Y')='".$year."' GROUP BY EXTRACT(week FROM date_sent) ORDER BY date_sent ASC");
+$sent_sms_week->execute();
+$sent_sms_week_rows = $sent_sms_week->fetchAll(PDO::FETCH_ASSOC);
+
+//Lets get the SMS received and group them by week
+$sms_received_week = $conn->prepare("SELECT COUNT(*) AS total_sms,msg_date,DATE_FORMAT(msg_date,'%U') AS week FROM incoming_messages 
+										 ".$where." AND DATE_FORMAT(msg_date,'%Y')='".$year."'
+										  GROUP BY EXTRACT(week FROM msg_date) ORDER BY msg_date ASC");
+$sms_received_week->execute();
+$sms_received_week_rows = $sms_received_week->fetchAll(PDO::FETCH_ASSOC);
+
+//Lets get the SMS sent and group them by Month
+$sent_sms = $conn->prepare("SELECT sum(sms_count)total_sms,date_sent,DATE_FORMAT(date_sent,'%b') AS month
+									 FROM outgoing_messages ".$where." AND DATE_FORMAT(date_sent,'%Y')='".$year."'
+									 GROUP BY EXTRACT(month FROM date_sent) ORDER BY date_sent ASC");
+$sent_sms->execute();
+$sent_sms_rows=$sent_sms->fetchAll(PDO::FETCH_ASSOC);	
+							 
+//Lets get the SMS received and group them by month
+$sms_received = $conn->prepare("SELECT COUNT(*) AS total_sms,msg_date,DATE_FORMAT(msg_date,'%Y') AS month FROM incoming_messages 
+										 ".$where." AND DATE_FORMAT(msg_date,'%Y')='".$year."'
+										  GROUP BY EXTRACT(month FROM msg_date) ORDER BY msg_date ASC");
+$sms_received->execute();
+$sms_received_rows = $sms_received->fetchAll(PDO::FETCH_ASSOC);
+
+//Contacts
+$contacts=$conn->prepare("SELECT COUNT(*) AS total_contacts,date_created,DATE_FORMAT(date_created,'%b') AS month 
+								  FROM contacts ".$where." AND DATE_FORMAT(date_created,'%Y')='".$year."'
+								  GROUP BY EXTRACT(month FROM date_created)
+								  ORDER BY date_created ASC");
+$contacts->execute();
+$contacts_row = $contacts->fetchAll(PDO::FETCH_ASSOC);
+
+//Short Codes
+$short_codes = $conn->prepare("SELECT count(*) AS total_short_codes,EXTRACT(Year FROM csc.date_created) AS year 
+										FROM company_short_codes AS csc 
+										LEFT JOIN short_codes AS sc ON sc.id = csc.short_code_id
+										".$where2."
+                              GROUP BY  EXTRACT(Year from csc.date_created) ORDER BY csc.date_created ASC");
+$short_codes->execute();
+$short_code_rows = $short_codes->fetchAll();	
+
+//Users
+$users = $conn->prepare("SELECT COUNT(*) AS total_users, DATE_FORMAT(date_created,'%b') AS month FROM users 
+                         ".$where." AND  EXTRACT(Year FROM date_created)='".$year."' 
+                         GROUP BY EXTRACT(Month FROM date_created) ORDER BY date_created ASC");	
+$users->execute();
+$user_rows = $users->fetchAll(PDO::FETCH_ASSOC);
+//Products
+$products = $conn->prepare("SELECT count(*) AS total_short_codes,p.product_name FROM company_short_codes AS csc 
+									 LEFT JOIN short_codes AS sc ON sc.id = csc.short_code_id 
+                            LEFT JOIN products AS p ON p.id=sc.product_id
+                            ".$where2." GROUP BY p.id");  
+$products->execute();
+$product_rows = $products->fetchAll(PDO::FETCH_ASSOC);     
+
+//Message Regions
+$message_regions = $conn->prepare("SELECT region_name, count(*) AS total_data FROM message_regions AS mr
+LEFT JOIN incoming_messages AS im ON im.id = mr.message_id
+".$where4."
+GROUP BY  region_name ASC");  
+$message_regions->execute();
+$message_region_rows = $message_regions->fetchAll(PDO::FETCH_ASSOC);                                      					  									  
+?>  
+  
+  <script>
+  (function ($) {
+ "use strict";
+ 
+	 /*----------------------------------------*/
+	/*  1.  SMS Statistics
+	/*----------------------------------------*/
+ 
+ /*Daily*/
+	var ctx = document.getElementById("sms_stat_daily");
+	var basiclinechart = new Chart(ctx, {
+		type: 'line',
+		data: {
+			labels: [<?php foreach($sent_sms_day_rows as $sent_sms_day_row){ echo '"'.$sent_sms_day_row['day'].'",'; } ?>],
+			datasets: [{
+				label: "SMS Sent",
+				fill: false,
+        backgroundColor: '#0BECE8',
+				borderColor: '#0BECE8',
+				data: [<?php foreach($sent_sms_day_rows as $sent_sms_day_row){ echo $sent_sms_day_row['total_sms'].',';} ?>]
+            }, {
+        label: "SMS Received",
+				fill: false,
+        backgroundColor: '#DFB209',
+				borderColor: '#DFB209',
+				data: [<?php foreach($sms_received_day_rows as $received_day_row){ echo $received_day_row['total_sms'].',';}?>]
+				
+		}]
+		},
+		options: {
+			responsive: true,
+			title:{
+				display:true,
+				text:'SMS(Daily)'
+			},
+			tooltips: {
+				mode: 'index',
+				intersect: false,
+			},
+			hover: {
+				mode: 'nearest',
+				intersect: true
+			},
+			scales: {
+				xAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Day'
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Total'
+					}
+				}]
+			}
+		}
+	});
+ 
+  /*Weekly*/
+	var ctx = document.getElementById("sms_stat_weekly");
+	var basiclinechart = new Chart(ctx, {
+		type: 'line',
+		data: {
+			labels: [<?php foreach($sent_sms_week_rows as $sent_sms_week_row){ echo '"'.$sent_sms_week_row['week'].'",'; } ?>],
+			datasets: [{
+				label: "SMS Sent",
+				fill: false,
+        backgroundColor: '#0CB61C',
+				borderColor: '#0CB61C',
+				data: [<?php foreach($sent_sms_week_rows as $sent_sms_week_row){ echo $sent_sms_week_row['total_sms'].',';} ?>]
+            }, {
+        label: "SMS Received",
+				fill: false,
+        backgroundColor: '#DF1009',
+				borderColor: '#DF1009',
+				data: [<?php foreach($sms_received_week_rows as $received_week_row){ echo $received_week_row['total_sms'].',';}?>]
+				
+		}]
+		},
+		options: {
+			responsive: true,
+			title:{
+				display:true,
+				text:'SMS(Weekly)'
+			},
+			tooltips: {
+				mode: 'index',
+				intersect: false,
+			},
+			hover: {
+				mode: 'nearest',
+				intersect: true
+			},
+			scales: {
+				xAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Week'
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Total'
+					}
+				}]
+			}
+		}
+	});
+ 
+ /*Monthly*/
+	var ctx = document.getElementById("sms_stat_monthly");
+	var basiclinechart = new Chart(ctx, {
+		type: 'line',
+		data: {
+			labels: [<?php foreach($sent_sms_rows as $sent_sms_row){ echo '"'.$sent_sms_row['month'].'",'; } ?>],
+			datasets: [{
+				label: "SMS Sent",
+				fill: false,
+            backgroundColor: '#006DF0',
+				borderColor: '#006DF0',
+				data: [<?php foreach($sent_sms_rows as $sent_sms_row){ echo $sent_sms_row['total_sms'].',';} ?>]
+            }, {
+             label: "SMS Received",
+				fill: false,
+        backgroundColor: '#933EC5',
+				borderColor: '#933EC5',
+				data: [<?php foreach($sms_received_rows as $received_row){ echo $received_row['total_sms'].',';}?>]
+				
+		}]
+		},
+		options: {
+			responsive: true,
+			title:{
+				display:true,
+				text:'SMS(Monthly)'
+			},
+			tooltips: {
+				mode: 'index',
+				intersect: false,
+			},
+			hover: {
+				mode: 'nearest',
+				intersect: true
+			},
+			scales: {
+				xAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Month'
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Total'
+					}
+				}]
+			}
+		}
+	});
+	 /*----------------------------------------*/
+	/*  2.  Contacts Statistics
+	/*----------------------------------------*/
+	var ctx = document.getElementById("contacts_stat");
+	var barchart1 = new Chart(ctx, {
+		type: 'bar',
+		
+		data: {
+			labels: [<?php foreach($contacts_row as $contact_row){ echo '"'.$contact_row['month'].'",';} ?>],
+			datasets: [{
+				label: 'Contacts',
+				data: [<?php foreach($contacts_row as $contact_row){ echo $contact_row['total_contacts'].',';} ?>],
+				backgroundColor: 'rgba(255, 99, 132, 0.2)',
+				borderColor: 'rgba(255,99,132,1)',
+				borderWidth: 1
+			}]
+		},
+		options: {
+			scales: {
+				xAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Month'
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Total'
+					}
+				}]
+			},
+			title:{
+				display:true,
+				text:'Contacts (Monthly)'
+			},
+		}
+	});
+	
+		 /*----------------------------------------*/
+	/*  3.  Short Code Statistics
+	/*----------------------------------------*/
+	var ctx = document.getElementById("short_code_stat");
+	var barchart1 = new Chart(ctx, {
+		type: 'bar',
+		
+		data: {
+			labels: [<?php foreach($short_code_rows as $short_code_row){ echo '"'.$short_code_row['year'].'",';} ?>],
+			datasets: [{
+				label: 'Short Codes',
+				data: [<?php foreach($short_code_rows as $short_code_row){ echo $short_code_row['total_short_codes'].',';} ?>],
+				backgroundColor: 'rgba(54, 162, 235, 0.2)',
+				borderColor: 'rgba(54, 162, 235, 1)',
+				borderWidth: 1
+			}]
+		},
+		options: {
+			scales: {
+				xAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Year'
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Total'
+					}
+				}]
+			},
+			title:{
+				display:true,
+				text:'Short Codes (Monthly)'
+			},
+		}
+	});
+	 /*----------------------------------------*/
+	/*  4.  Products Pie Chart
+	/*----------------------------------------*/
+	var ctx = document.getElementById("products_stat");
+	var piechart = new Chart(ctx, {
+		type: 'pie',
+		data: {
+			labels: [<?php foreach($product_rows as $product_row){echo '"'.$product_row['product_name'].'",';} ?>],
+			datasets: [{
+				label: 'Products',
+                backgroundColor: [
+					'#303030',		
+					'#D80027',
+					'#006DF0'
+				],
+				data: [<?php foreach($product_rows as $product_row){echo $product_row['total_short_codes'].',';} ?>]
+            }]
+		},
+		options: {
+			responsive: true,
+			title:{
+				display:true,
+				text:'Products'
+			}
+		}
+		
+	});
+	
+   /*----------------------------------------*/
+	/*  5.  Users Statistics
+	/*----------------------------------------*/
+	var ctx = document.getElementById("users_stat");
+	var barchart1 = new Chart(ctx, {
+		type: 'bar',
+		
+		data: {
+			labels: [<?php foreach($user_rows as $user_row){ echo '"'.$user_row['month'],'",';} ?>],
+			datasets: [{
+				label: 'Users',
+				data: [<?php foreach($user_rows as $user_row){ echo $user_row['total_users'],',';} ?>],
+				backgroundColor: 'rgba(255, 206, 86, 0.2)',
+				borderColor: 'rgba(255, 206, 86, 1)',
+				borderWidth: 1
+			}]
+		},
+		options: {
+			scales: {
+				xAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Month'
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Total'
+					}
+				}]
+			},
+			title:{
+				display:true,
+				text:'Users (Monthly)'
+			},
+		}
+	});
+		
+})(jQuery); 
+  </script>
+
+<script>
+$("#year").change(function(){
+
+year = $("#year").val();
+ $('#other_content').empty();
+ $('#page_content').empty();
+ $("#wait").show();
+ $('#page_content').load('../views/settings/dashboard.html?year='+year,function(responseTxt, statusTxt, jqXHR){
+  if(statusTxt == "success"){
+    $("#wait").hide();
+  }
+  if(statusTxt == "error"){
+   alert("Error: " + jqXHR.status + " " + jqXHR.statusText);
+  }
+ });
+
+});
+</script>
+  
+  <!-- Single pro tab start-->
+        <!-- income order visit user Start -->
+        <div class="income-order-visit-user-area">
+        <div style="padding:5px;margin:5px;color:red;"><h3>Statistics &raquo; <?php echo titleCase($_SESSION['FON_G_COMPANY_NAME']); ?></h3>
+      <select id="year" name="year" class="my-form-control">
+    <?php
+	$current_year = (int)date('Y');
+    $firstYear = (int)date('Y') - 2;
+    $lastYear = $firstYear + 2;
+    for($i=$firstYear;$i<=$lastYear;$i++)
+    {
+	if($i==$current_year){
+	  $val = 'selected';
+	}else{
+	   $val = '';
+	}
+    echo '<option '.$val.' value="'.$i.'">'.$i.'</option>';
+    }
+    ?>
+      </select>
+
+</div>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                        <div class="income-dashone-total reso-mg-b-30">
+                            <div class="income-dashone-pro">
+                                <div class="income-rate-total">
+                                    <div class="price-edu-rate">
+                                        <h3><span class="counter"><?php echo $total_incoming_sms; ?></span></h3>
+                                    </div>
+                                    <div class="price-graph">
+                                        <span id="sparkline1"></span>
+                                    </div>
+                                </div>
+                                <div class="income-range">
+                                    <p>SMS Received </p>
+                                    <span class="income-percentange bg-green"><span class="counter"><?php echo $date; ?> </span> <i class="fa fa-calendar"></i>
+                                    </span>
+                                </div>
+                                <div class="clear"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                        <div class="income-dashone-total">
+                            <div class="income-dashone-pro">
+                                <div class="income-rate-total">
+                                    <div class="price-edu-rate">
+                                        <h3><span class="counter"><?php echo $total_sms; ?></span></h3>
+                                    </div>
+                                    <div class="price-graph">
+                                        <span id="sparkline6"></span>
+                                    </div>
+                                </div>
+                                <div class="income-range order-cl">
+                                    <p>SMS Sent
+                                    <span class="income-percentange bg-red"><span class="counter"><?php echo $date; ?></span> <i class="fa fa-calendar"></i>
+                                    </span>
+                                </div>
+                                <div class="clear"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                        <div class="income-dashone-total res-mg-t-30 res-tablet-mg-t-30 dk-res-t-pro-30">
+                            <div class="income-dashone-pro">
+                                <div class="income-rate-total">
+                                    <div class="price-edu-rate">
+                                        <h3><span class="counter"><?php echo $total_users; ?></span></h3>
+                                    </div>
+                                    <div class="price-graph">
+                                        <span id="sparkline2"></span>
+                                    </div>
+                                </div>
+                                <div class="income-range visitor-cl">
+                                    <p>Users</p>
+                                    <span class="income-percentange bg-blue"><span class="counter"><?php echo $date; ?></span> <i class="fa fa-calendar"></i>
+                                    </span>
+                                </div>
+                                <div class="clear"></div>
+                            </div>
+                        </div>
+                    </div>
+                  
+                </div>
+            </div>
+        </div><br/>
+         <div class="income-order-visit-user-area">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                        <div class="income-dashone-total reso-mg-b-30">
+                            <div class="income-dashone-pro">
+                                <div class="income-rate-total">
+                                    <div class="price-edu-rate">
+                                        <h3><span class="counter"><?php echo $active_count; ?></span></h3>
+                                    </div>
+                                    <div class="price-graph">
+                                        <span id="sparkline1"></span>
+                                    </div>
+                                </div>
+                                <div class="income-range">
+                                    <p>Active Users</p>
+                                    <span class="income-percentange bg-green">
+                                    </span>
+                                </div>
+                                <div class="clear"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                        <div class="income-dashone-total">
+                            <div class="income-dashone-pro">
+                                <div class="income-rate-total">
+                                    <div class="price-edu-rate">
+                                        <h3><span class="counter"><?php echo $inactive_count; ?></span></h3>
+                                    </div>
+                                    <div class="price-graph">
+                                        <span id="sparkline6"></span>
+                                    </div>
+                                </div>
+                                <div class="income-range order-cl">
+                                    <p>Inactive Users</p>
+                                    <span class="income-percentange bg-red">
+                                    </span>
+                                </div>
+                                <div class="clear"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                        <div class="income-dashone-total res-mg-t-30 res-tablet-mg-t-30 dk-res-t-pro-30">
+                            <div class="income-dashone-pro">
+                                <div class="income-rate-total">
+                                    <div class="price-edu-rate">
+                                        <h3><span class="counter"><?php echo $company_count; ?></span></h3>
+                                    </div>
+                                    <div class="price-graph">
+                                        <span id="sparkline2"></span>
+                                    </div>
+                                </div>
+                                <div class="income-range visitor-cl">
+                                    <p>Companies</p>
+                                    <span class="income-percentange bg-blue">
+                                    </span>
+                                </div>
+                                <div class="clear"></div>
+                            </div>
+                        </div>
+                    </div>
+                  
+                </div>
+            </div>
+        </div>
+        <!-- income order visit user End -->
+        <div class="dashtwo-order-area mg-tb-30">
+            <div class="container-fluid">
+                <div class="row">
+                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="responsive-mg-b-30" style="background-color:#fff;padding:5px;">
+                          
+                            <div id="basic-chart">
+                                <canvas id="sms_stat_daily"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="responsive-mg-b-30" style="background-color:#fff;padding:5px;">
+                          
+                            <div id="bar1-chart">
+                                <canvas id="sms_stat_weekly"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                
+                 
+                </div>
+            </div>
+        </div>
+		 <!-- income order visit user End -->
+        <div class="dashtwo-order-area mg-tb-30">
+            <div class="container-fluid">
+                <div class="row">
+                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="responsive-mg-b-30" style="background-color:#fff;padding:5px;">
+                          
+                            <div id="basic-chart">
+                                <canvas id="sms_stat_monthly"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="responsive-mg-b-30" style="background-color:#fff;padding:5px;">
+                          
+                            <div id="bar1-chart">
+                                <canvas id="contacts_stat"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                
+                 
+                </div>
+            </div>
+        </div>
+        <!-- income order visit user End -->
+        <div class="dashtwo-order-area mg-tb-30">
+            <div class="container-fluid">
+                <div class="row">
+                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="responsive-mg-b-30" style="background-color:#fff;padding:5px;">
+                          
+                            <div id="basic-chart">
+                                <canvas id="short_code_stat"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="responsive-mg-b-30" style="background-color:#fff;padding:5px;">
+                          
+                            <div id="basic-chart">
+                                <canvas id="users_stat"></canvas>
+                            </div>
+                        </div>
+                    </div>                               
+                </div>
+            </div>
+        </div>
+		
+		    <!-- income order visit user End -->
+        <div class="dashtwo-order-area mg-tb-30">
+            <div class="container-fluid">
+                <div class="row">
+                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="responsive-mg-b-30" style="background-color:#fff;padding:5px;">
+                            <div style="align:center;"><h6>Distribution by Region</h6>(Click on column to sort fields) </div>
+                            <div id="basic-chart">
+                                <table class="table" id="region">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Region Name</th>
+                                                <th>Viewers</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+										 <?php
+										$counter=0;
+										 foreach($message_region_rows as $region_row){
+										 $counter++;
+										 ?>
+                                            <tr>
+                                                <td><?php echo $counter; ?></td>
+                                                <td><?php echo $region_row['region_name']; ?></td>
+                                                <td><?php echo $region_row['total_data']; ?></td>
+                                            </tr>
+                                          <?php
+										  }
+										  ?>
+                                        </tbody>
+                                    </table>
+									<a href="#" class="paginate"  id="previous">Previous</a>  <a href="#" class="paginate" id="next">Next</a>
+                            </div>
+                        </div>
+                    </div>
+                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="responsive-mg-b-30" style="background-color:#fff;padding:5px;">
+                          
+                           <div id="pie-chart">
+                                <canvas id="products_stat"></canvas>
+                            </div>
+                        </div>
+                    </div>                               
+                </div>
+            </div>
+        </div>
+           
+<script type='text/javascript'>
+ 
+$(function () {
+    // Selectors for future use
+    var myTable = "#region";
+    var myTableBody = myTable + " tbody";
+    var myTableRows = myTableBody + " tr";
+    var myTableColumn = myTable + " th";
+ 
+    // Starting table state
+    function initTable() {
+        $(myTableBody).attr("data-pageSize", 10);
+        $(myTableBody).attr("data-firstRecord", 0);
+        $('#previous').hide();
+        $('#next').show();
+ 
+        // Increment the table width for sort icon support
+ 
+        // Start the pagination
+        paginate(parseInt($(myTableBody).attr("data-firstRecord"), 10),
+       parseInt($(myTableBody).attr("data-pageSize"), 10));
+	   
+	   // Increment the table width for sort icon support
+            $(myTableColumn).each(function () {
+                var width = $(this).width();
+                $(this).width(width + 40);
+            });
+ 
+            // Set the first column as sorted ascending
+            $(myTableColumn).eq(0).addClass("sorted-asc");
+ 
+            //Sort the table using the current sorting order
+            sortTable($(myTable), 0, "asc");
+    }
+ 
+ 
+    // Table sorting function
+        function sortTable(table, column, order) {
+            var asc = order === 'asc';
+            var tbody = table.find('tbody');
+ 
+            // Sort the table using a custom sorting function by switching 
+            // the rows order, then append them to the table body
+            tbody.find('tr').sort(function (a, b) {
+                if (asc) {
+                    return $('td:eq(' + column + ')', a).text()
+                        .localeCompare($('td:eq(' + column + ')', b).text());
+                } else {
+                    return $('td:eq(' + column + ')', b).text()
+                        .localeCompare($('td:eq(' + column + ')', a).text());
+                }
+            }).appendTo(tbody);
+ 
+        }
+ 
+        // Heading click
+        $(myTableColumn).click(function () {
+ 
+            // Remove the sort classes for all the column, but not the first
+            $(myTableColumn).not($(this)).removeClass("sorted-asc sorted-desc");
+ 
+            // Set or change the sort direction
+            if ($(this).hasClass("sorted-asc") || $(this).hasClass("sorted-desc")) {
+                $(this).toggleClass("sorted-asc sorted-desc");
+            } else {
+                $(this).addClass("sorted-asc");
+            }
+ 
+            //Sort the table using the current sorting order
+            sortTable($(myTable),
+                        $(this).index(),
+                        $(this).hasClass("sorted-asc") ? "asc" : "desc");
+ 
+        });
+ 
+    // Pager click
+    $("a.paginate").click(function (e) {
+        e.preventDefault();
+        var tableRows = $(myTableRows);
+        var tmpRec = parseInt($(myTableBody).attr("data-firstRecord"), 10);
+        var pageSize = parseInt($(myTableBody).attr("data-pageSize"), 10);
+ 
+        // Define the new first record
+        if ($(this).attr("id") == "next") {
+            tmpRec += pageSize;
+        } else {
+            tmpRec -= pageSize;
+        }
+        // The first record is < of 0 or > of total rows
+        if (tmpRec < 0 || tmpRec > tableRows.length) return
+ 
+        $(myTableBody).attr("data-firstRecord", tmpRec);
+        paginate(tmpRec, pageSize);
+    });
+ 
+    // Paging function
+    var paginate = function (start, size) {
+        var tableRows = $(myTableRows);
+        var end = start + size;
+        // Hide all the rows
+        tableRows.hide();
+        // Show a reduced set of rows using a range of indices.
+        tableRows.slice(start, end).show();
+        // Show the pager
+        $(".paginate").show();
+        // If the first row is visible hide prev
+        if (tableRows.eq(0).is(":visible")) $('#previous').hide();
+        // If the last row is visible hide next 
+        if (tableRows.eq(tableRows.length - 1).is(":visible")) $('#next').hide();
+    }
+ 
+    // Table starting state
+    initTable(); 
+});	
+</script>				

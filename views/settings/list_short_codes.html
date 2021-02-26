@@ -1,0 +1,339 @@
+<?php
+include("../../connect/connect.php");
+//Get Products
+$query = $conn->prepare("SELECT id AS product_id,product_name FROM products ORDER BY product_name ASC");
+$query->execute();
+$products = $query->fetchAll(PDO::FETCH_ASSOC);
+//Get Categories 
+$query_2 = $conn->prepare("SELECT id AS cat_id, category_name FROM category ORDER BY category_name ASC");
+$query_2->execute();
+$categories =$query_2->fetchAll(PDO::FETCH_ASSOC);
+?>
+<div style="background-color:#fff;padding:5px;">
+<div style="margin:10px;">
+<div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+<div class="breadcome-heading">
+<form role="search" class="sr-input-func">
+<input type="text" id="suggest_short_code" placeholder="Search..." class="search-int form-control">
+<a href="#"><i class="fa fa-search"></i></a>
+</form>
+</div>
+</div>
+
+<div class="button-ap-list responsive-btn">
+<div class="btn-group btn-custom-groups btn-custom-groups-one btn-mg-b-10">
+<button style="margin-right:30px;" type="button" id="add_new_short_code" class="btn btn-primary" data-toggle="modal" data-target="#PrimaryModalhdbgcl"><i class="fa fa-plus-square " aria-hidden="true"></i> Add Short Code</button>
+<select name="filter"  class="form-control" style="width:100px;margin-right:50px;" id="filter">
+<option selected value="">Default</option>
+<option   value="50">50</option>
+<option value="100">100</option>
+<option value="200">200</option>
+</select>
+</div>
+</div>
+</div><hr/>
+<script type="text/javascript">
+        //lets have a function to auto suggest searches invoices
+        $(document).ready(function(){
+		$('#loader_suggest').hide();
+        $('#suggest_list').hide();
+        $('#suggest_list_div').hide();      
+        $("#suggest_short_code").keyup(function(e){
+            e.preventDefault(); 
+           $('#loader_suggest').show();			
+            //hide table data
+            $("#table_content_section").hide();
+            //hide pagination
+            $("#paginated_data").hide();
+            //hide records found
+            $("#rec_found").hide();
+            var min_length = 1; // min caracters to display the autocomplete
+            var keyword = $('#suggest_short_code').val();
+            if (keyword.length >= min_length) {
+                $.ajax({
+                    url: '../process/suggest_short_code.php',
+                    type: 'POST',
+                    data: {keyword:keyword},
+                    success:function(data){
+					    $('#loader_suggest').hide();
+                        //show suggestions
+                        $('#suggest_list_div').show();
+                        $('#suggest_list').show();
+                        $('#suggest_list').html(data);
+						
+                    }
+                });
+            }else{
+			    $('#loader_suggest').hide();
+                //hide suggestions
+                $('#suggest_list').hide();
+                $('#suggest_list_div').hide();
+                //show table data
+                getdata(1);
+                $("#table_content_section").show();
+                //show pagination
+                $("#paginated_data").hide();
+                //show records found
+                $("#rec_found").show();
+            }
+
+        });
+       function selectItem(val) {
+		$("#suggest_short_code").val(val);
+		$("#suggest_list_div").hide();
+		}
+        function set_item(item) {
+            // change input value
+            $('#suggest_short_code').val(item);
+            // hide proposition list
+            $('#suggest_short_code').hide();
+        }
+    });
+    $(document).keypress(
+     function(event){
+     if(event.which == '13') {
+     event.preventDefault();
+     }
+   });
+</script>
+
+<div id="PrimaryModalhdbgcl" class="modal modal-edu-general default-popup-PrimaryModal fade" role="dialog">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+							
+								<div id="form_content">
+                                    <div class="modal-header header-color-modal bg-color-1">
+                                        <h4 class="modal-title">Add  Short Code  </h4>                                    
+                                    </div>
+                                    <div class="modal-close-area modal-close-df">
+				     							 <a class="close" data-dismiss="modal" href="#"><i class="fa fa-close"></i></a>
+				                        </div> 
+                                 <br/>                                   
+                                 <div class="alert alert-info">Note: For Bulk SMS Services use the Access Code provisioned during the Service creation on the SDP instead of Short Code.</div>                           
+                                    <div class="modal-body"> 
+                                      <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Product</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+															<select id="product" class="form-control">
+                                                                <?php
+																foreach($products as $product_row){
+																echo "<option value='".$product_row['product_id']."'>".$product_row['product_name']."</option>";
+																
+																}
+																
+																?>
+																</select>
+																<span class="product_error"><font color="red">*  Select product</font></span>
+                                                            </div>
+                                                        </div>
+                                           </div>									
+                                          <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Short code No</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="text" class="form-control" name="short_code" id="short_code"/> 
+																<span class="short_code_error"><font color="red">* Enter short code no </font></span>
+                                                            </div>
+                                                        </div>
+                                           </div>
+										                        <div class="form-group-inner">
+                                                 
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Description</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="text" class="form-control" name="desc" id="desc"/> 
+																<span class="desc_error"><font color="red">* Enter short code description </font></span>
+                                                            </div>
+                                                        </div><br/>
+														<div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Category</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+															<select id="category" class="form-control">
+                                                                <?php
+																foreach($categories as $cat_row){
+																echo "<option value='".$cat_row['cat_id']."'>".$cat_row['category_name']."</option>";
+																
+																}
+																
+																?>
+																</select>
+																<span class="category_error"><font color="red">* Select category</font></span>
+                                                            </div>
+                                                        </div><br/>
+                                          
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Service ID</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="text" class="form-control" name="service" id="service"/> 
+																<span class="service_error"><font color="red">* Enter the Service ID generated from Safaricom's SDP </font></span><br/>
+														
+                                                            </div>
+                                                        </div>
+                                                      </div>
+										  
+                                                        
+                                         <div style="margin:20px; padding:20px;">
+									    <a id="loader"><img src="../img/loader.gif" width="50" height="50" /></a>                                                                         
+                                <a href="#" class="btn btn-primary" id="save">Save</a>
+								    </div> 										  
+                                    </div> 
+                                  </div>									
+									<div style="margin:20px; padding:20px;" id="response"></div>										
+									
+									
+                                </div>
+                            </div>
+                        </div>
+
+<script>
+
+$(document).ready(function(){  
+$("#loader").hide();
+$(".category_error").hide();
+$(".short_code_error").hide();
+$(".desc_error").hide();
+$(".service_error").hide();
+$(".product_error").hide();
+
+
+$("#save").click(function(){
+$("#response").empty();
+category = $("#category").val();
+short_code = $("#short_code").val();
+desc = $("#desc").val();
+service = $("#service").val();
+product = $("#product").val();
+
+error = false;
+
+if(category===''){
+$(".category_error").show();
+$("#category").css("border-color","red");
+error = true;
+}else{
+$(".category_error").hide();
+$("#category").css("border-color","green");
+}
+
+if(short_code===''){
+$(".short_code_error").show();
+$("#short_code").css("border-color","red");
+error = true;
+}else{
+$(".short_code_error").hide();
+$("#short_code").css("border-color","green");
+}
+
+if(desc===''){
+$(".desc_error").show();
+$("#desc").css("border-color","red");
+error = true;
+}else{
+$(".desc_error").hide();
+$("#desc").css("border-color","green");
+}
+
+
+if(service===''){
+$(".service_error").show();
+$("#service").css("border-color","red");
+error = true;
+}else{
+$(".service_error").hide();
+$("#service").css("border-color","green");
+}
+
+if(product===''){
+$(".product_error").show();
+$("#product").css("border-color","red");
+error = true;
+}else{
+$(".product_error").hide();
+$("#product").css("border-color","green");
+}
+
+//Send request to server for processing if no erros
+if(error == false){
+//Hide Button
+$("#save").hide();
+//Show loader
+$("#loader").show();
+
+myData = "category=" + category + "&short_code=" + short_code + "&desc=" + desc + "&service=" + service + "&product=" + product;
+jQuery.ajax({
+type: "POST",
+url: "../process/add_short_code.php",
+dataType: "text",
+data: myData,
+success: function(b) {
+$("#response").append(b);
+$("#loader").hide();
+$("#save").show();
+$("#response").show();
+}
+});
+}
+});
+});
+</script>
+<div id="suggest_list_div"><ul id="suggest_list"></ul></div><br/>
+<div id="loader_suggest"><img src="../img/loader.gif" width="30" height="30" /><h5>Searching...</h5></div>
+<div id="table_content_section">
+<h4>Short Codes</h4><hr/>
+<div id="loader_short_code"><img src="../img/loader.gif" width="40" height="40" /><h4>Loading data, please wait...</h4></div>           
+<div id="short_code_data"></div>
+</div>
+</div>			
+			<script>
+			$(document).ready(function(){
+			  $("#loader_user").show();
+				getdata(1);
+				function getdata(pageno){
+				// source of data	
+				var myData = 'page=' + pageno;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "../views/settings/loads/short_codes.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#short_code_data").html(response);
+			     $("#loader_short_code").hide();
+                 }
+			 });
+			}		
+			});						
+			//filter change event
+			$("#filter").change(function(){
+			$("#short_code_data").empty();
+			filter_val = $("#filter").val();
+			pageno = 1;
+			$("#loader_short_code").show();
+				// source of data	
+				var myData = 'page=' + pageno + '&filter=' + filter_val;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "../views/settings/loads/short_codes.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#short_code_data").html(response);
+			     $("#loader_short_code").hide();
+                 }
+				});
+			});
+</script>
+
+						
+						

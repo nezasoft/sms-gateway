@@ -1,0 +1,211 @@
+<?php 
+//Get user data
+$user = $conn->prepare("SELECT us.id AS user_id, us.fname, us.lname, us.email,us.date_created,us.last_login,l.level_name FROM users AS us 
+LEFT JOIN levels AS l ON l.id = us.level_id WHERE us.id='".$_SESSION['FON_G_USER_ID']."' LIMIT 1");
+$user->execute();
+$user_row = $user->fetch(PDO::FETCH_ASSOC);
+
+?>
+<!-- Single pro tab review Start-->
+        <div class="single-pro-review-area mt-t-30 mg-b-15">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                        <div class="profile-info-inner">
+                            <div class="profile-img">
+                                <img src="../img/profile.png" alt="<?php  echo titleCase($user_row['fname']." ".$user_row['lname']);?>" />
+                            </div>
+                            <div class="profile-details-hr">
+                                <div class="row">
+                                    <div class="col-lg-8 col-md-12 col-sm-12 col-xs-8">
+                                        <div>
+                                            <p><b>Name</b><br /> <?php  echo titleCase($user_row['fname']." ".$user_row['lname']);?></p>
+                                        </div>
+                                    </div>
+                          
+                                </div>
+                                <div class="row">
+                                    
+                                    <div class="col-lg-8 col-md-12 col-sm-12 col-xs-8">
+                                        <div>
+                                            <p><b>Level</b><br /> <?php  echo titleCase($user_row['level_name']);?></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-8 col-md-12 col-sm-12 col-xs-8">
+                                        <div >
+                                            <p><b>Email</b><br /><?php  echo $user_row['email'];?></p>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-8 col-md-12 col-sm-12 col-xs-8">
+                                        <div>
+                                            <p><b>Last Login</b><br /> <font size="-1"><?php  echo $user_row['last_login'];?></font></p>
+                                        </div>
+                                    </div>
+                                </div>
+                              <div class="row">
+                                    <div class="col-lg-8 col-md-12 col-sm-12 col-xs-8">
+                                        <div>
+                                            <p><b>Date Created</b><br /> <font size="-1"><?php  echo $user_row['date_created'];?></font></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8 col-md-8 col-sm-8 col-xs-12">
+                        <div class="product-payment-inner-st res-mg-t-30 analysis-progrebar-ctn">
+                            <ul id="myTabedu1" class="tab-review-design">
+                                <li class="active"><a href="#description">Profile</a></li>
+                           
+                            </ul>
+                            <div id="myTabContent" class="tab-content custom-product-edit">
+                                <div class="product-tab-list tab-pane fade active in" id="description">
+                                    <div class="row">
+                                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                                            <div class="review-content-section">
+                                                <div class="chat-discussion" style="height: auto">
+                                                    <div class="chat-message">
+														
+                                                        <div class="message">
+                                                            <a class="message-author" href="#"> Change Password </a><hr/>
+                                                            <div class="form-group-inner">
+                                                            <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Current Password</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="password" class="form-control" id="current_password" name="current_password" />
+                                                            	<span class="current_password_error"><font color="red">* Enter your current password</font></span>
+                                                            </div>
+                                                           </div>
+                                                           <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">New Password</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="password" class="form-control" id="new_password" name="new_password" />
+                                                                <span class="new_password_error"><font color="red">* Enter your new password</font></span>
+                                                            </div>
+                                                           </div>
+                                                           <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Confirm Password</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" />
+                                                                <span class="confirm_password_error"><font color="red">* Confirm your password</font></span>
+                                                                <span class="match_password_error"><font color="red">* Passwords do not match</font></span>
+                                                            </div>
+                                                           </div>
+                                                          </div>
+                                                            <div class="m-t-md mg-t-10">
+                                                                <button class="btn btn-success" id="change_password">Save</button>
+                                                                <a id="loader"><img src="../img/loader.gif" width="40" height="40" />Updating...</a>
+                                                                <div id="response"></div>
+                                                            </div>
+                                                        </div>
+                                                        <script>
+                                                        $(document).ready(function(){
+                                                        $("#loader").hide();
+                                                        //Hide Errors
+                                                        $(".current_password_error").hide();
+                                                        $(".new_password_error").hide();
+                                                        $(".confirm_password_error").hide();
+                                                        $(".match_password_error").hide();
+                                                        
+                                                        $("#change_password").click(function(e){
+                                                        e.preventDefault();
+                                                        $("#response").empty();
+                                                        error = false;
+                                                        
+                                                        current_password = $("#current_password").val();
+                                                        new_password = $("#new_password").val();
+                                                        confirm_password = $("#confirm_password").val();
+                                                        
+                                                        if(current_password===''){
+                                                        error = true;
+                                                        $("#current_password").css("border-color","red");
+                                                        $("#current_password").focus();
+                                                        $(".current_password_error").show();
+                                                        }else{
+                                                        $("#current_password").css("border-color","green");
+                                                        $(".current_password_error").hide();
+                                                        }
+                                                        
+                                                        if(new_password===''){
+                                                        error = true;
+                                                        $("#new_password").css("border-color","red");
+                                                        $("#new_password").focus();
+                                                        $(".new_password_error").show();
+                                                        }else{
+                                                        $("#new_password").css("border-color","green");
+                                                        $(".new_password_error").hide();
+                                                        }
+                                                        
+                                                        if(confirm_password===''){
+                                                        error = true;
+                                                        $("#confirm_password").css("border-color","red");
+                                                        $("#confirm_password").focus();
+                                                        $(".confirm_password_error").show();
+                                                        }else{
+                                                        $("#confirm_password").css("border-color","green");
+                                                        $(".confirm_password_error").hide();
+                                                        }
+                                                        
+                                                        if(new_password !== confirm_password){
+                                                        error = true;
+                                                        $("#confirm_password").css("border-color","red");
+                                                        $("#confirm_password").focus();
+                                                        $(".match_password_error").show();
+                                                        
+                                                        }else{
+                                                        $(".match_password_error").hide();
+                                                        $("#confirm_password").css("border-color","green");
+                                                        }
+                                                        
+                                                        
+                                                        if(error == false){
+                                                        
+                                                        //Hide Button
+																			$("#change_password").hide();
+																			//Show loader
+																			$("#loader").show();
+																			
+																			myData = "current_password=" + current_password + '&confirm_password=' + confirm_password;
+																			jQuery.ajax({
+																			type: "POST",
+																			url: "../process/change_password.php",
+																			dataType: "text",
+																			data: myData,
+																			success: function(b) {
+																			$("#response").append(b);
+																			$("#loader").hide();
+																			$("#change_password").show();
+																			$("#response").show();
+																			}
+																			});
+                                                        
+                                                        }
+                                                        
+                                                        });
+                                                        });
+                                                        </script>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                               
+                               
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>

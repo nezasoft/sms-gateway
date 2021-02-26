@@ -1,0 +1,571 @@
+<?php
+if($_SESSION['FON_G_COMPANY_ID']==2 && $_SESSION['FON_G_LEVEL_ID']==4){
+$where = "WHERE id LIKE '%%'";
+}else{
+$where = "WHERE id='".$_SESSION['FON_G_COMPANY_ID']."'";
+}
+
+//Get companies
+$query = $conn->prepare("SELECT id AS company_id,company_name  FROM company ".$where." ORDER BY company_name ASC");
+$query->execute();
+$companies = $query->fetchAll(PDO::FETCH_ASSOC);
+//Get Levels 
+$query_2 = $conn->prepare("SELECT id AS level_id, level_name FROM levels ORDER BY level_name ASC");
+$query_2->execute();
+$levels =$query_2->fetchAll(PDO::FETCH_ASSOC);
+?>
+<div style="background-color:#fff;padding:5px;margin-bottom:30px;">
+<div style="margin:5px;">
+<div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+<div class="breadcome-heading">
+<form role="search" class="sr-input-func">
+<input type="text" id="suggest_user" placeholder="Search..." class="search-int form-control">
+<a href="#"><i class="fa fa-search"></i></a>
+</form>
+</div>
+</div>
+<br/><br/>
+<div class="button-ap-list responsive-btn">
+<div class="btn-group btn-custom-groups btn-custom-groups-one btn-mg-b-10">
+<button style="margin-right:30px;" type="button" id="add_new_user" class="btn btn-primary" data-toggle="modal" data-target="#PrimaryModalhdbgcl"><i class="fa fa-plus-square " aria-hidden="true"></i> Add User</button>
+<select name="filter"  class="form-control" style="width:100px;margin-right:50px;" id="filter">
+<option selected value="">Default</option>
+<option   value="50">50</option>
+<option value="100">100</option>
+<option value="200">200</option>
+</select>
+</div>
+</div>
+</div><hr/>
+<script type="text/javascript">
+        //lets have a function to auto suggest searches invoices
+        $(document).ready(function(){
+		$('#loader_suggest').hide();
+        $('#suggest_list').hide();
+        $('#suggest_list_div').hide();      
+        $("#suggest_user").keyup(function(e){
+            e.preventDefault(); 
+           $('#loader_suggest').show();			
+            //hide table data
+            $("#table_content_section").hide();
+            //hide pagination
+            $("#paginated_data").hide();
+            //hide records found
+            $("#rec_found").hide();
+            var min_length = 1; // min caracters to display the autocomplete
+            var keyword = $('#suggest_user').val();
+            if (keyword.length >= min_length) {
+                $.ajax({
+                    url: '../process/suggest_user.php',
+                    type: 'POST',
+                    data: {keyword:keyword},
+                    success:function(data){
+					    $('#loader_suggest').hide();
+                        //show suggestions
+                        $('#suggest_list_div').show();
+                        $('#suggest_list').show();
+                        $('#suggest_list').html(data);
+						
+                    }
+                });
+            }else{
+			    $('#loader_suggest').hide();
+                //hide suggestions
+                $('#suggest_list').hide();
+                $('#suggest_list_div').hide();
+                //show table data
+                getdata(1);
+                $("#table_content_section").show();
+                //show pagination
+                $("#paginated_data").hide();
+                //show records found
+                $("#rec_found").show();
+            }
+
+        });
+       function selectItem(val) {
+		$("#suggest_user").val(val);
+		$("#suggest_list_div").hide();
+		}
+        function set_item(item) {
+            // change input value
+            $('#suggest_user').val(item);
+            // hide proposition list
+            $('#suggest_list').hide();
+        }
+    });
+    $(document).keypress(
+     function(event){
+     if(event.which == '13') {
+     event.preventDefault();
+     }
+   });
+</script>
+
+<div id="PrimaryModalhdbgcl" class="modal modal-edu-general default-popup-PrimaryModal fade" role="dialog">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+							
+								<div id="form_content">
+                                    <div class="modal-header header-color-modal bg-color-1">
+                                        <h4 class="modal-title">Add New User  </h4>                                    
+                                    </div>
+                                    <div class="modal-close-area modal-close-df">
+				      						<a class="close" data-dismiss="modal" href="#"><i class="fa fa-close"></i></a>
+				      						</div> 
+                                    <div class="modal-body"> 
+                                      <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Company</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+															<select id="company" class="form-control">
+                                                                <?php
+																foreach($companies as $company_row){
+																echo "<option value='".$company_row['company_id']."'>".$company_row['company_name']."</option>";
+																
+																}
+																
+																?>
+																</select>
+																<span class="company_error"><font color="red">* This field is required. Select category</font></span>
+                                                            </div>
+                                                        </div>
+                                           </div>									
+                                          <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">First Name</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="text" class="form-control" name="fname" id="fname"/> 
+																<span class="fname_error"><font color="red">* Enter first name </font></span>
+                                                            </div>
+                                                        </div>
+                                           </div>
+										   <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Last Name</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="text" class="form-control" name="lname" id="lname"/> 
+																<span class="lname_error"><font color="red">* Enter last name </font></span>
+                                                            </div>
+                                                        </div>
+                                           </div>
+										   <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Access Level</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+															<select id="level" class="form-control">
+                                                                <?php
+																foreach($levels as $level_row){
+																echo "<option value='".$level_row['level_id']."'>".$level_row['level_name']."</option>";
+																
+																}
+																
+																?>
+																</select>
+																<span class="level_error"><font color="red">*  Select access level</font></span>
+                                                            </div>
+                                                        </div>
+                                           </div>
+										   <div class="form-group-inner">
+                                                        <div class="row">
+                                                      
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Password </label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="password" class="form-control example1"  name="password" id="password"/>
+																                             <span class="password_error"><font color="red">* Enter Password </font></span>
+                                                              <div id="progress_password">
+                                                              <div id="progress-bar-password"></div>
+                                                              <span style="font-size:12px;" class="password_text"></span><br/>
+                                                               </div> 
+                                                            </div>
+                                                           
+
+                                                       
+                                                        </div>
+                                           </div>
+										   <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Confirm Password </label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="password" class="form-control" name="confirm_password" id="confirm_password"/>
+																<span class="confirm_password_error"><font color="red">* Confirm Password </font></span>
+																<span class="match_password_error"><font color="red">* Passwords do not match</font></span>
+                                                            </div>
+                                                        </div>
+                                           </div>
+										   
+										   <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Email</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="text" class="form-control" name="email" id="email"/> 
+																<span class="email_error"><font color="red">* This field is required. Enter email address</font></span><br/>
+																<span class="invalid_error"><font color="red">* Enter a valid email address </font></span>
+                                                            </div>
+                                                        </div>
+                                          </div>										  
+                                    </div>                                    
+									<div style="margin:20px; padding:20px;">
+									    <a id="loader"><img src="../img/loader.gif" width="40" height="40" /></a>                                                                         
+                               <a href="#" class="btn btn-primary" id="save">Save</a>										
+								    </div>										
+									</div>
+									<div style="margin:20px; padding:20px;" id="response"></div>
+                                </div>
+                            </div>
+                        </div>
+
+<script>
+$.strength = function( element, password ) {
+        var desc = [{'width':'0px'},  {'width':'20%'}, {'width':'40%'}, {'width':'60%'}, {'width':'80%'}, {'width':'100%'}];
+        var descClass = ['progress-bar-danger', 'progress-bar-warning', 'progress-bar-warning', 'progress-bar-warning', 'progress-bar-success', 'progress-bar-success'];
+        var score = 0;
+           if(password.length==0){
+             $(".password_text").empty();
+           }   
+
+        if( password.length > 1 ) {
+            score++;
+            $(".password_text").text("Very Weak");
+            $(".password_text").css("color","#FF3355");
+        }
+        if( password.length > 6 ) {
+            score++;
+            $(".password_text").text("Weak");
+            $(".password_text").css("color","#FF3355");
+        }
+
+        if ( ( password.match(/[a-z]/) ) && ( password.match(/[A-Z]/) ) ) {
+            score++;
+            $(".password_text").text("Medium");
+            $(".password_text").css("color","#FFD433");
+        }
+
+        /*if ( password.match(/\d+/) ) {
+            score++;
+            $(".password_text").text("Strong");
+            $(".password_text").css("color","#73BD7A");
+        }*/
+
+        if ( password.match(/.[!,@,#,$,%,^,&,*,?,_,~,-,(,)]/) ) {
+            score++;
+            $(".password_text").text("Very Strong");
+            $(".password_text").css("color","#12CB23");
+        }
+
+        if ( password.length > 10 ) {
+            score++;
+            
+        }
+
+        element.removeClass( descClass[score-1] ).addClass( descClass[score] ).css( desc[score] );
+    };
+
+$(function() {
+  $( "#password" ).keyup(function() {
+                    $.strength( $( "#progress-bar-password" ), $( this ).val() );
+                });
+});
+
+
+$(document).ready(function(){  
+$("#loader").hide();
+$(".company_error").hide();
+$(".fname_error").hide();
+$(".lname_error").hide();
+$(".level_error").hide();
+$(".password_error").hide();
+$(".confirm_password_error").hide();
+$(".match_password_error").hide();
+$(".email_error").hide();
+$(".invalid_error").hide();
+
+
+$("#save").click(function(){
+$("#response").empty();
+company = $("#company").val();
+fname = $("#fname").val();
+lname = $("#lname").val();
+level = $("#level").val();
+password = $("#password").val();
+confirm_password = $("#confirm_password").val();
+email = $("#email").val();
+
+error = false;
+
+if(company===''){
+$(".company_error").show();
+$("#company").css("border-color","red");
+error = true;
+}else{
+error = false;
+$(".company_error").hide();
+$("#company").css("border-color","green");
+}
+
+if(fname===''){
+$(".fname_error").show();
+$("#fname").css("border-color","red");
+error = true;
+}else{
+error = false;
+$(".fname_error").hide();
+$("#fname").css("border-color","green");
+}
+
+if(lname===''){
+$(".lname_error").show();
+$("#lname").css("border-color","red");
+error = true;
+}else{
+error = false;
+$(".lname_error").hide();
+$("#lname").css("border-color","green");
+}
+
+if(level===''){
+$(".level_error").show();
+$("#level").css("border-color","red");
+error = true;
+}else{
+error = false;
+$(".level_error").hide();
+$("#level").css("border-color","green");
+}
+
+if(password===''){
+$(".password_error").show();
+$("#password").css("border-color","red");
+error = true;
+}else{
+error = false;
+$(".password_error").hide();
+$("#password").css("border-color","green");
+}
+
+if(confirm_password===''){
+$(".confirm_password_error").show();
+$("#confirm_password").css("border-color","red");
+error = true;
+}else{
+error = false; 
+$(".confirm_password_error").hide();
+$("#confirm_password").css("border-color","green");
+}
+
+if(confirm_password !== password){
+    $(".match_password_error").show();
+    $("#confirm_password").css("border-color","red");
+    error = true;
+}else{
+    error = false;
+    $(".match_password_error").hide();
+    $("#confirm_password").css("border-color","green");
+}
+
+
+if(email===''){
+$(".email_error").show();
+$("#email").css("border-color","red");
+error = true;
+}else{
+	error = false;
+	$(".email_error").hide();
+	if(IsEmail(email)==false){
+	error = true;
+	$('.invalid_error').show();
+	  return false;
+	}else{
+	error = false;
+	$('.invalid_error').hide();
+	$("#email").css("border-color","green");
+	}
+
+}
+
+//Send request to server for processing if no erros
+if(error == false){
+//Hide Button
+$("#save").hide();
+//Show loader
+$("#loader").show();
+
+myData = "company=" + company + "&fname=" + fname + "&lname=" + lname + "&level=" + level + "&email=" + email + "&password=" + confirm_password;
+jQuery.ajax({
+type: "POST",
+url: "../process/add_user.php",
+dataType: "text",
+data: myData,
+success: function(b) {
+$("#response").append(b);
+$("#loader").hide();
+$("#save").show();
+$("#response").show();
+}
+});
+
+}
+
+});
+function IsEmail(email) {
+  var regex = /^([a-zA-Z0-9_\.\-\+])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+  if(!regex.test(email)) {
+    return false;
+  }else{
+    return true;
+  }
+}
+$("#email").focusout(function(){
+email = $("#email").val();
+error = false;
+	if(email===''){
+	$(".email_error").show();
+	$("#email").css("border-color","red");
+	error = true;
+	}else{
+		error = false;
+		$(".email_error").hide();
+		if(IsEmail(email)==false){
+		error = true;
+		$('.invalid_error').show();
+		  return false;
+		}else{
+		error = false;
+		$('.invalid_error').hide();
+		$("#email").css("border-color","green");
+		}
+
+	}
+});
+
+$("#fname").focusout(function(){
+fname = $("#fname").val();
+error = false;
+	if(fname===''){
+	$(".fname_error").show();
+	$("#fname").css("border-color","red");
+	error = true;
+	}else{
+	error = false;
+	$(".fname_error").hide();
+	$("#fname").css("border-color","green");
+	}
+	});
+ $("#lname").focusout(function(){
+  lname = $("#lname").val();
+  error = false;
+	if(lname===''){
+	$(".lname_error").show();
+	$("#lname").css("border-color","red");
+	error = true;
+	}else{
+	error = false;
+	$(".lname_error").hide();
+	$("#lname").css("border-color","green");
+	}
+	});
+ 
+  $("#password").focusout(function(){
+  password = $("#password").val();
+    if(password===''){
+    $(".password_error").show();
+    $("#password").css("border-color","red");
+    error = true;
+    }else{
+    error = false;
+    $(".password_error").hide();
+    $("#password").css("border-color","green");
+    }
+	});
+
+$("#confirm_password").focusout(function(){
+  password = $("#password").val();
+  confirm_password = $("#confirm_password").val();
+  if(confirm_password===''){
+  $(".confirm_password_error").show();
+  $("#confirm_password").css("border-color","red");
+  error = true;
+  }else{
+  error = false;
+  $(".confirm_password_error").hide();
+  $("#confirm_password").css("border-color","green");
+  }
+  
+  if(confirm_password !== password){
+    $(".match_password_error").show();
+    $("#confirm_password").css("border-color","red");
+    error = true;
+  }else{
+    error = false;
+    $(".match_password_error").hide();
+    $("#confirm_password").css("border-color","green");
+  }
+
+});
+
+});
+</script>
+<div id="suggest_list_div"><ul id="suggest_list"></ul></div><br/>
+<div id="loader_suggest"><img src="../img/loader.gif" width="30" height="30" /><h5>Searching...</h5></div>
+<div id="table_content_section">
+<h3>Users</h3><hr/>
+<div id="loader_user"><img src="../img/loader.gif" width="40" height="40" /><h4>Loading data, please wait...</h4></div>           
+<div id="user_data"></div>
+</div>
+</div>			
+			<script>
+			$(document).ready(function(){
+			  $("#loader_user").show();
+				getdata(1);
+				function getdata(pageno){
+				// source of data	
+				var myData = 'page=' + pageno;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "views/settings/loads/users.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#user_data").html(response);
+			     $("#loader_user").hide();
+                 }
+			 });
+			}		
+			});						
+			//filter change event
+			$("#filter").change(function(){
+			$("#user_data").empty();
+			filter_val = $("#filter").val();
+			pageno = 1;
+			$("#loader_user").show();
+				// source of data	
+				var myData = 'page=' + pageno + '&filter=' + filter_val;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "views/settings/loads/users.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#user_data").html(response);
+			     $("#loader_user").hide();
+                 }
+				});
+			});
+</script>
+
+						
+						

@@ -1,0 +1,31 @@
+<soapenv:Envelope
+	xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+	xmlns:v2="http://www.huawei.com.cn/schema/common/v2_1"
+	xmlns:loc="http://www.csapi.org/schema/parlayx/sms/send/v2_2/local">
+	<soapenv:Header>
+		<v2:RequestSOAPHeader>
+			<v2:spId>601957</v2:spId>
+			<v2:spPassword>v0sZkh5YiXo4FAN84w9dQOdkTDpu2303XVyB2thNi1U=</v2:spPassword>
+			<v2:serviceId>35000001000001</v2:serviceId>
+			<v2:timeStamp>20181210021223</v2:timeStamp>
+			<!--mandatory if service is on-demand-->
+			<v2:linkid>07201312390000000006</v2:linkid>
+		</v2:RequestSOAPHeader>
+	</soapenv:Header>
+	<soapenv:Body>
+		<loc:sendSms>
+			<!--1 or more repetitions:-->
+			<loc:addresses>tel:254724802834</loc:addresses>
+			<loc:addresses>tel:254727129606</loc:addresses>
+			<!--Optional:-->
+			<loc:senderName>Frontier Opticals Network</loc:senderName>
+			<loc:message>This is a test message</loc:message>
+			<!--Optional:-->
+			<loc:receiptRequest>
+				<endpoint>http://192.168.20.230/fonsms/notify/sendsms/</endpoint>
+				<interfaceName>SmsNotification</interfaceName>
+				<correlator>123</correlator>
+			</loc:receiptRequest>
+		</loc:sendSms>
+	</soapenv:Body>
+</soapenv:Envelope>

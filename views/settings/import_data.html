@@ -1,0 +1,67 @@
+
+<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../css/main.css">
+<link rel="stylesheet" href="../../css/bootstrap.min.css">
+<script src="../../js/vendor/jquery-3.3.1.min.js"></script>
+<script src="../../js/bootstrap.min.js"></script>
+<div>
+       <div class="modal-dialog">
+       <div id="upload_content">
+           <div class="modal-content">
+           <div class="modal-header header-color-modal bg-color-1">
+                <h4 class="modal-title">Import Data  </h4> 
+                 <div class="modal-close-area modal-close-df">
+				      <a class="close" data-dismiss="modal" href="#"><i class="fa fa-close"></i></a>
+				      </div>                                                      
+            </div>
+            <div class="modal-body"> 
+         <p>Import contacts from an Excel CSV file.</p>
+                 <hr/>
+            <form id='form_upload_data' method='post' enctype='multipart/form-data' >
+            <input type="file" name="import_contacts" id="file_import_contacts" class="form-control" /> <br/>
+            </form>
+            <button id="upload_contacts" class="btn btn-success"><i class="fa fa-upload"></i> Upload</button>
+            <a id="upload_loader"><img src="../../img/loader.gif" width="50" height="50" />Importing data...</a> 
+            
+           </div>
+            <div id="response_upload"></div>
+          </div>
+          
+        </div>    
+         
+    </div> 
+
+
+
+<script>
+    $(document).ready(function(){
+    $("#upload_loader").hide();
+    $("#upload_contacts").click(function(e){
+    $("#response_upload").empty();
+    $("#upload_contacts").hide();
+    $("#upload_loader").show();
+    formdata = new FormData();
+    if($("#file_import_contacts").prop('files').length>0){
+     file =$("#file_import_contacts").prop("files")[0];
+     formdata.append("import_contacts",file);
+    }
+    e.preventDefault();
+     jQuery.ajax({
+    	url:"../../process/import_wards.php",
+    	method:"POST",
+    	data: formdata,
+    	contentType:false,
+    	cache:false,
+    	processData:false,
+    	success: function(response){
+    	$("#response_upload").html(response);
+
+    	$("#upload_loader").hide();
+    	$("#upload_contacts").show();
+    	}
+    });
+    });
+    });
+    </script>          
+
+

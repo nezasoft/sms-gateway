@@ -1,0 +1,87 @@
+ <?php
+ //Make a connection
+include("../../connect/connect.php");
+ $company = sanitize_string($_GET['company']);
+ $short_code = sanitize_string($_GET['short_code']);
+ $service_id = sanitize_string($_GET['service_id']);
+ //Get short code details
+ $query = $conn->prepare("SELECT csc.id AS company_short_code_id, csc.keyword,sc.short_code,sc.service_id, company_name
+ FROM company_short_codes AS csc LEFT JOIN short_codes AS sc ON sc.id = csc.short_code_id
+ LEFT JOIN company AS c ON c.id = csc.company_id
+ WHERE sc.id='".$short_code."' AND sc.service_id='".$service_id."' AND csc.company_id='".$company."' LIMIT 1");
+ $query->execute();
+ $query_row = $query->fetch(PDO::FETCH_ASSOC);
+
+ //Lets count unread messages
+ $unread = $conn->prepare("SELECT id AS message_id FROM incoming_messages WHERE short_code_id='".$short_code."' AND service_id='".$service_id."' AND company_id='".$company."' AND msg_read='N' ");
+ $unread->execute();
+ $unread_count = $unread->rowCount();
+ ?>
+ <div style="background-color:#fff;">
+ <div style="background-color:#fff;padding:5px;margin:5px;color:red;"><h3>Statistics &raquo; <?php echo titleCase($_SESSION['FON_G_COMPANY_NAME']); ?></h3></div>
+ <br/><a href="#">Home</a> > <a href="#"><?php echo titleCase($query_row['company_name']); ?></a> > <a href="#">Bulk SMS </a> > <a href="#">Messages </a>
+ <hr/><h4><?php echo $query_row['short_code'].": ".$query_row['keyword'].": ".$query_row['service_id']; ?></h4><hr/>
+  </div>  
+    <div class="mailbox-area mg-b-15" style="background-color:#fff;">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-3 col-md-3 col-sm-3 col-xs-12">
+                        <div class="hpanel responsive-mg-b-30">
+                            <div class="panel-body">
+
+                                <ul class="mailbox-list">
+                                   
+                                    <li id="outbox_link">
+                                        <a href="#" id="outgoing_messages"><i class="fa fa-paper-plane"></i> Sent</a>
+                                    </li>
+                                    
+                                </ul>
+                         
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                    $(document).ready(function(){
+                    //Empty Messages Content DIv
+                    $('#message_content').empty();
+                    //hide loader
+                    $("#wait_messages").show();
+                    //Load Messages In Inbox
+                    $('#message_content').load('../views/bulksms/outgoing_messages.html',function(responseTxt, statusTxt, jqXHR){
+  						  if(statusTxt == "success"){
+   					  $("#wait_messages").hide();
+  							}
+  							if(statusTxt == "error"){
+  							alert("Error: " + jqXHR.status + " " + jqXHR.statusText);
+  							}
+ 							});
+ 								
+ 							//Outgoing Messages click event
+ 							$("#outgoing_messages").click(function(){
+ 							$("#outbox_link").addClass("active");
+                     $("#inbox_link").removeClass("active");
+ 							$('#message_content').empty();
+ 							$("#wait_messages").show();
+ 							//Load Messages In Inbox
+                     $('#message_content').load('../views/bulksms/outgoing_messages.html',function(responseTxt, statusTxt, jqXHR){
+  						   if(statusTxt == "success"){
+   					   $("#wait_messages").hide();
+  							}
+  							if(statusTxt == "error"){
+  							alert("Error: " + jqXHR.status + " " + jqXHR.statusText);
+  							}
+ 							});
+ 							
+ 							});
+ 							
+ 
+                    
+                    });
+                    </script>
+                   <div id="wait_messages" style="padding:10px; marging:10px;"><img src="../img/loader.gif" width="40" height="40" /><strong>Loading messages...</strong></div>					
+                    <div id="message_content">
+                    
+                    </div>
+                </div>
+            </div>
+        </div>

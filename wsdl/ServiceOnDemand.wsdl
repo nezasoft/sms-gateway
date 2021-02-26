@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:apachesoap="http://xml.apache.org/xml-soap" xmlns:impl="http://serviceondemand.sag.sdp.huawei.com" xmlns:tns3="http://schema.sag.sdp.huawei.com" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:complex="http://complex.sag.sdp.huawei.com" targetNamespace="http://serviceondemand.sag.sdp.huawei.com">
+	<wsdl:types>
+		<schema elementFormDefault="qualified" targetNamespace="http://schema.sag.sdp.huawei.com" xmlns="http://www.w3.org/2001/XMLSchema">
+			<import namespace="http://complex.sag.sdp.huawei.com"/>
+			<complexType name="ServiceOnDemandRequest">
+				<sequence>
+					<element name="destUserID" type="complex:UserID"/>
+					<element name="serviceID" type="xsd:string"/>
+					<element name="channelID" type="xsd:int" minOccurs="0" maxOccurs="1"/>
+					<element name="langInfo" type="complex:LangInfo" minOccurs="0" maxOccurs="1"/>
+					<element name="extensionInfo" type="complex:NamedParameterList" minOccurs="0" maxOccurs="1"/>
+				</sequence>
+			</complexType>
+			<complexType name="ServiceOnDemandResponse">
+				<sequence>
+					<element name="result" type="xsd:string"/>
+					<element name="resultDescription" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+					<element name="extensionInfo" type="complex:NamedParameterList" minOccurs="0" maxOccurs="1"/>
+				</sequence>
+			</complexType>
+			<xsd:element name="serviceOnDemandRequest" type="tns3:ServiceOnDemandRequest"/>
+			<xsd:element name="serviceOnDemandResponse" type="tns3:ServiceOnDemandResponse"/>
+		</schema>
+		<schema targetNamespace="http://complex.sag.sdp.huawei.com" xmlns="http://www.w3.org/2001/XMLSchema">
+			<complexType name="NamedParameter">
+				<sequence>
+					<element name="key" type="xsd:string"/>
+					<element name="value" type="xsd:string"/>
+				</sequence>
+			</complexType>
+			<complexType name="NamedParameterList">
+				<sequence>
+					<element minOccurs="0" maxOccurs="unbounded" name="item" type="complex:NamedParameter"/>
+				</sequence>
+			</complexType>
+			<complexType name="UserID">
+				<sequence>
+					<element name="ID" type="xsd:string"/>
+					<element name="type" type="xsd:int"/>
+				</sequence>
+			</complexType>
+			<complexType name="LangInfo">
+				<sequence>
+					<element name="language" type="xsd:string"/>
+					<element name="country" nillable="true" type="xsd:string"/>
+				</sequence>
+			</complexType>
+		</schema>
+	</wsdl:types>
+	<wsdl:message name="serviceOnDemandRequest">
+		<wsdl:part name="serviceOnDemandRequest" element="tns3:serviceOnDemandRequest">
+      </wsdl:part>
+	</wsdl:message>
+	<wsdl:message name="serviceOnDemandResponse">
+		<wsdl:part name="serviceOnDemandResponse" element="tns3:serviceOnDemandResponse">
+      </wsdl:part>
+	</wsdl:message>
+	<wsdl:portType name="ServiceOnDemand">
+		<wsdl:operation name="serviceOnDemand">
+			<wsdl:input name="serviceOnDemandRequest" message="impl:serviceOnDemandRequest">
+        </wsdl:input>
+			<wsdl:output name="serviceOnDemandResponse" message="impl:serviceOnDemandResponse">
+        </wsdl:output>
+		</wsdl:operation>
+	</wsdl:portType>
+	<wsdl:binding name="ServiceOnDemandSoapBinding" type="impl:ServiceOnDemand">
+		<wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<wsdl:operation name="serviceOnDemand">
+			<wsdlsoap:operation soapAction="serviceOnDemand" style="document"/>
+			<wsdl:input name="serviceOnDemandRequest">
+				<wsdlsoap:body use="literal"/>
+			</wsdl:input>
+			<wsdl:output name="serviceOnDemandResponse">
+				<wsdlsoap:body use="literal"/>
+			</wsdl:output>
+		</wsdl:operation>
+	</wsdl:binding>
+	<wsdl:service name="ServiceOnDemandService">
+		<wsdl:port name="ServiceOnDemand" binding="impl:ServiceOnDemandSoapBinding">
+			<wsdlsoap:address location="http://127.0.0.1:80/ServiceOnDemandService/services/ServiceOnDemand"/>
+		</wsdl:port>
+	</wsdl:service>
+	<!--WSDL created by Apache Axis version: 1.4Built on Aug 6, 2010 (06:55:48 PDT)-->
+</wsdl:definitions>

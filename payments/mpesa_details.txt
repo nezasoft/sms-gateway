@@ -1,0 +1,21 @@
+{
+                    "requestId":"22716-57587975-1",
+                    "errorCode": "500.003.1001",
+                    "errorMessage": "Saving notification info fail, the record is ===================Value Begin=======================
+innerIndex:0
+spId:100839
+serviceId:100839000
+correlator:332500
+scfType:0
+protocolType:9
+endpoint:https://10.195.1.154/mpesa/internal/c2b/v1/validate
+criteria:ValidationURL
+address:
+expiredTime:2147483647
+southBoundId:
+notificationFormat:
+resourceId:22716-57587975-1
+===================Value End=======================
+"
+                }
+            

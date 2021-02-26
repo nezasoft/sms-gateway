@@ -1,0 +1,68 @@
+<?php
+include("../../connect/connect.php");
+
+?>
+<div style="background-color:#fff;padding:5px;">
+<div style="margin:10px;">
+<div class="button-ap-list responsive-btn">
+<div class="btn-group btn-custom-groups btn-custom-groups-one btn-mg-b-10">
+
+<select name="filter"  class="form-control" style="width:100px;margin-right:50px;" id="filter">
+<option selected value="">Default</option>
+<option   value="50">50</option>
+<option value="100">100</option>
+<option value="200">200</option>
+</select>
+</div>
+</div>
+</div><hr/>
+
+
+<div id="table_content_section">
+<h4>Settings</h4><hr/>
+<div id="loader_settings"><img src="../img/loader.gif" width="40" height="40" /><h4>Loading data, please wait...</h4></div>           
+<div id="settings_data"></div>
+</div>
+</div>			
+			<script>
+			$(document).ready(function(){
+			  $("#loader_level").show();
+				getdata(1);
+				function getdata(pageno){
+				// source of data	
+				var myData = 'page=' + pageno;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "../views/settings/loads/settings.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#settings_data").html(response);
+			     $("#loader_settings").hide();
+                 }
+			 });
+			}		
+			});						
+			//filter change event
+			$("#filter").change(function(){
+			$("#settings_data").empty();
+			filter_val = $("#filter").val();
+			pageno = 1;
+			$("#loader_settings").show();
+				// source of data	
+				var myData = 'page=' + pageno + '&filter=' + filter_val;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "../views/settings/loads/settings.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#settings_data").html(response);
+			     $("#loader_settings").hide();
+                 }
+				});
+			});
+</script>
+
+						
+						

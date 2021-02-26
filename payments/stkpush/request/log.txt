@@ -1,0 +1,39 @@
+{
+                    "requestId":"",
+                    "errorCode": "404.001.03",
+                    "errorMessage": "Invalid Access Token"
+                }
+            
+{
+                    "requestId":"",
+                    "errorCode": "404.001.03",
+                    "errorMessage": "Invalid Access Token"
+                }
+            
+{
+            "ResponseCode": "0",
+            "ResponseDescription":"The service request has been accepted successsfully",
+            "MerchantRequestID":"17819-8044025-1",
+            "CheckoutRequestID":"ws_CO_DMZ_536443248_08072019154517163",
+            "ResultCode": "0",
+            "ResultDesc":"The service request is processed successfully."
+        }
+        
+{
+            "ResponseCode": "0",
+            "ResponseDescription":"The service request has been accepted successsfully",
+            "MerchantRequestID":"17819-8044025-1",
+            "CheckoutRequestID":"ws_CO_DMZ_536443248_08072019154517163",
+            "ResultCode": "0",
+            "ResultDesc":"The service request is processed successfully."
+        }
+        
+{
+            "ResponseCode": "0",
+            "ResponseDescription":"The service request has been accepted successsfully",
+            "MerchantRequestID":"17819-8044025-1",
+            "CheckoutRequestID":"ws_CO_DMZ_536443248_08072019154517163",
+            "ResultCode": "0",
+            "ResultDesc":"The service request is processed successfully."
+        }
+        

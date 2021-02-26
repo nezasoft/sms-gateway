@@ -1,0 +1,92 @@
+<?php
+include("../../connect/connect.php");
+
+//Get Company details
+$company_id = $_SESSION['FON_G_COMPANY_ID'];
+$company = $conn->prepare("SELECT company_name FROM company WHERE id='".$company_id."' LIMIT 1");
+$company->execute();
+$company_row = $company->fetch(PDO::FETCH_ASSOC);
+$company_name = $company_row['company_name'];
+
+//Get short code details
+$get_details = $conn->prepare("SELECT sc.short_code, sc.service_id FROM company_short_codes AS csc LEFT JOIN short_codes AS sc ON sc.id = csc.short_code_id WHERE csc.company_id='".$company_id."' AND sc.product_id='5'");
+$get_details->execute();
+$get_details_row = $get_details->fetch(PDO::FETCH_ASSOC);
+$short_code = $get_details_row['short_code'];
+$service_id = $get_details_row['service_id'];
+
+$short_code = $_GET['short_code'];
+$service_id = $_GET['service_id'];
+
+$get_code_data = $conn->prepare("SELECT short_code FROM short_codes WHERE id='".$short_code."' AND service_id='".$service_id."' LIMIT 1");
+$get_code_data->execute();
+$short_code_row  = $get_code_data->fetch(PDO::FETCH_ASSOC); 
+$short_code = $short_code_row['short_code'];
+?>
+<div style="background-color:#fff;padding:5px;">
+<div style="margin:10px;">
+<div class="button-ap-list responsive-btn">
+<strong>Filter:</strong>
+<div class="btn-group btn-custom-groups btn-custom-groups-one btn-mg-b-10">
+ <select name="filter"  class="form-control" style="width:100px;margin-right:50px;" id="filter">
+<option selected value="">Default</option>
+<option   value="50">50</option>
+<option value="100">100</option>
+<option value="200">200</option>
+</select>
+</div>
+<span id="title" style="font-size:20px; color:red; font-weight: bolder;"><?php echo titleCase($company_name); ?></title>
+</div>
+
+</div><hr/>
+<div id="table_content_section">
+<a href="#">Home</a> > <a href="#"><?php echo titleCase($company_name); ?></a> > <a href="#">Short Codes </a> > <a href="#"><?php echo $short_code; ?> </a> > <a href="#">Subscribers<br/><br/><br/>
+<h4>Subscribers</h4><hr/>
+<div id="loader_subscriptions"><img src="../img/loader.gif" width="40" height="40" /><h4>Loading data, please wait...</h4></div>           
+<div id="subscriptions_data"></div>
+</div>
+</div>			
+			<script>
+			$(document).ready(function(){
+			  $("#loader_subscriptions").show();
+				getdata(1);
+				function getdata(pageno){
+				// source of data	
+				company = <?php echo $company_id;?>;
+				var myData = 'page=' + pageno + '&company=' + company ;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "../views/short_codes/loads/short_code_subscriptions.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#subscriptions_data").html(response);
+         $("#loader_subscriptions").hide();
+       }
+			 });
+			}		
+			});						
+			//filter change event
+			$("#filter").change(function(){
+			$("#subscriptions_data").empty();
+			filter_val = $("#filter").val();
+			pageno = 1;
+			company = <?php echo $company_id; ?>;
+			$("#loader_subscriptions").show();
+				// source of data	
+				var myData = 'page=' + pageno + '&filter=' + filter_val + '&company=' + company;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "../views/short_codes/loads/short_codes.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#subscriptions_data").html(response);
+         $("#loader_subscriptions").hide();
+         }
+				});
+			});
+</script>
+
+						
+						

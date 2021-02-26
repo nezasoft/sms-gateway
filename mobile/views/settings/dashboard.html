@@ -1,0 +1,554 @@
+<?php 
+
+$date = date('Y-m-d');
+$year = date('Y');
+if($_SESSION['FON_G_COMPANY_ID']==2 && $_SESSION['FON_G_LEVEL_ID']==4){ 
+$where = "WHERE company_id LIKE '%%'";
+$where2 = "WHERE csc.company_id LIKE '%%'";
+$where3 = "WHERE id LIKE '%%'";
+}else{
+$where = "WHERE company_id ='".$_SESSION['FON_G_COMPANY_ID']."'";
+$where2 = "WHERE csc.company_id ='".$_SESSION['FON_G_COMPANY_ID']."'";
+$where3 = "WHERE id ='".$_SESSION['FON_G_COMPANY_ID']."'";
+}
+//Lets get statistics
+//SMS Sent
+$count_sms = $conn->prepare("SELECT SUM(sms_count) as total_sent FROM outgoing_messages ".$where."");
+$count_sms->execute();
+$count_sms_rows = $count_sms->fetch(PDO::FETCH_ASSOC);
+$total_sms = $count_sms_rows['total_sent'];
+//SMS Received
+$count_incoming_sms = $conn->prepare("SELECT count(*) AS total_sms FROM outgoing_messages ".$where."");
+$count_incoming_sms->execute();
+$count_incoming_sms_rows = $count_incoming_sms->fetch(PDO::FETCH_ASSOC);
+$total_outgoing_sms = $count_incoming_sms_rows['total_sms'];
+//Users
+$count_users = $conn->prepare("SELECT id,active FROM users ".$where."");
+$count_users->execute();
+$total_users = $count_users->rowCount();
+$users_rows = $count_users->fetchAll(PDO::FETCH_ASSOC);
+$active_count=0;
+$inactive_count =0;
+foreach($users_rows as $user_row){
+if($user_row['active']==1){
+$active_count++;
+}elseif($user_row['active']==0){
+$inactive_count++;
+}
+}
+//Companies
+$companies = $conn->prepare("SELECT id FROM company ".$where3."");
+$companies->execute();
+$company_count = $companies->rowCount();
+
+//Lets get the SMS sent and group them by Month
+$sent_sms = $conn->prepare("SELECT sum(sms_count)total_sms,date_sent,DATE_FORMAT(date_sent,'%b') AS month
+									 FROM outgoing_messages ".$where." AND DATE_FORMAT(date_sent,'%Y')='".$year."'
+									 GROUP BY EXTRACT(month FROM date_sent) ORDER BY date_sent ASC");
+$sent_sms->execute();
+$sent_sms_rows=$sent_sms->fetchAll(PDO::FETCH_ASSOC);	
+							 
+//Lets get the SMS received and group them by month
+$sms_received = $conn->prepare("SELECT COUNT(*) AS total_sms,msg_date,DATE_FORMAT(msg_date,'%Y') AS month FROM incoming_messages 
+										 ".$where." AND DATE_FORMAT(msg_date,'%Y')='".$year."'
+										  GROUP BY EXTRACT(month FROM msg_date) ORDER BY msg_date ASC");
+$sms_received->execute();
+$sms_received_rows = $sms_received->fetchAll(PDO::FETCH_ASSOC);
+
+//Contacts
+$contacts=$conn->prepare("SELECT COUNT(*) AS total_contacts,date_created,DATE_FORMAT(date_created,'%b') AS month 
+								  FROM contacts ".$where." AND DATE_FORMAT(date_created,'%Y')='".$year."'
+								  GROUP BY EXTRACT(month FROM date_created)
+								  ORDER BY date_created ASC");
+$contacts->execute();
+$contacts_row = $contacts->fetchAll(PDO::FETCH_ASSOC);
+
+//Short Codes
+$short_codes = $conn->prepare("SELECT count(*) AS total_short_codes,EXTRACT(Year FROM csc.date_created) AS year 
+										FROM company_short_codes AS csc 
+										LEFT JOIN short_codes AS sc ON sc.id = csc.short_code_id
+										".$where2."
+                              GROUP BY  EXTRACT(Year from csc.date_created) ORDER BY csc.date_created ASC");
+$short_codes->execute();
+$short_code_rows = $short_codes->fetchAll();	
+
+//Users
+$users = $conn->prepare("SELECT COUNT(*) AS total_users, DATE_FORMAT(date_created,'%b') AS month FROM users 
+                         ".$where." AND  EXTRACT(Year FROM date_created)='".$year."' 
+                         GROUP BY EXTRACT(Month FROM date_created) ORDER BY date_created ASC");	
+$users->execute();
+$user_rows = $users->fetchAll(PDO::FETCH_ASSOC);
+//Products
+$products = $conn->prepare("SELECT count(*) AS total_short_codes,p.product_name FROM company_short_codes AS csc 
+									 LEFT JOIN short_codes AS sc ON sc.id = csc.short_code_id 
+                            LEFT JOIN products AS p ON p.id=sc.product_id
+                            ".$where2." GROUP BY p.id");  
+$products->execute();
+$product_rows = $products->fetchAll(PDO::FETCH_ASSOC);                                             					  									  
+?>  
+  
+  <script>
+  (function ($) {
+ "use strict";
+ 
+	 /*----------------------------------------*/
+	/*  1.  SMS Statistics
+	/*----------------------------------------*/
+	var ctx = document.getElementById("sms_stat");
+	var basiclinechart = new Chart(ctx, {
+		type: 'line',
+		data: {
+			labels: [<?php foreach($sent_sms_rows as $sent_sms_row){ echo '"'.$sent_sms_row['month'].'",'; } ?>],
+			datasets: [{
+				label: "SMS Sent",
+				fill: false,
+            backgroundColor: '#006DF0',
+				borderColor: '#006DF0',
+				data: [<?php foreach($sent_sms_rows as $sent_sms_row){ echo $sent_sms_row['total_sms'].',';} ?>]
+            }, {
+             label: "SMS Received",
+				fill: false,
+            backgroundColor: '#933EC5',
+				borderColor: '#933EC5',
+				data: [<?php foreach($sms_received_rows as $received_row){ echo $received_row['total_sms'].',';}?>]
+				
+		}]
+		},
+		options: {
+			responsive: true,
+			title:{
+				display:true,
+				text:'SMS Statistics(Monthly)'
+			},
+			tooltips: {
+				mode: 'index',
+				intersect: false,
+			},
+			hover: {
+				mode: 'nearest',
+				intersect: true
+			},
+			scales: {
+				xAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Month'
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Total'
+					}
+				}]
+			}
+		}
+	});
+	 /*----------------------------------------*/
+	/*  2.  Contacts Statistics
+	/*----------------------------------------*/
+	var ctx = document.getElementById("contacts_stat");
+	var barchart1 = new Chart(ctx, {
+		type: 'bar',
+		
+		data: {
+			labels: [<?php foreach($contacts_row as $contact_row){ echo '"'.$contact_row['month'].'",';} ?>],
+			datasets: [{
+				label: 'Contacts',
+				data: [<?php foreach($contacts_row as $contact_row){ echo $contact_row['total_contacts'].',';} ?>],
+				backgroundColor: 'rgba(255, 99, 132, 0.2)',
+				borderColor: 'rgba(255,99,132,1)',
+				borderWidth: 1
+			}]
+		},
+		options: {
+			scales: {
+				xAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Month'
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Total'
+					}
+				}]
+			},
+			title:{
+				display:true,
+				text:'Contacts (Monthly)'
+			},
+		}
+	});
+	
+		 /*----------------------------------------*/
+	/*  3.  Short Code Statistics
+	/*----------------------------------------*/
+	var ctx = document.getElementById("short_code_stat");
+	var barchart1 = new Chart(ctx, {
+		type: 'bar',
+		
+		data: {
+			labels: [<?php foreach($short_code_rows as $short_code_row){ echo '"'.$short_code_row['year'].'",';} ?>],
+			datasets: [{
+				label: 'Short Codes',
+				data: [<?php foreach($short_code_rows as $short_code_row){ echo $short_code_row['total_short_codes'].',';} ?>],
+				backgroundColor: 'rgba(54, 162, 235, 0.2)',
+				borderColor: 'rgba(54, 162, 235, 1)',
+				borderWidth: 1
+			}]
+		},
+		options: {
+			scales: {
+				xAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Year'
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Total'
+					}
+				}]
+			},
+			title:{
+				display:true,
+				text:'Short Codes (Monthly)'
+			},
+		}
+	});
+	 /*----------------------------------------*/
+	/*  4.  Products Pie Chart
+	/*----------------------------------------*/
+	var ctx = document.getElementById("products_stat");
+	var piechart = new Chart(ctx, {
+		type: 'pie',
+		data: {
+			labels: [<?php foreach($product_rows as $product_row){echo '"'.$product_row['product_name'].'",';} ?>],
+			datasets: [{
+				label: 'Products',
+                backgroundColor: [
+					'#303030',		
+					'#D80027',
+					'#006DF0'
+				],
+				data: [<?php foreach($product_rows as $product_row){echo $product_row['total_short_codes'].',';} ?>]
+            }]
+		},
+		options: {
+			responsive: true,
+			title:{
+				display:true,
+				text:'Products'
+			}
+		}
+		
+	});
+	
+   /*----------------------------------------*/
+	/*  5.  Users Statistics
+	/*----------------------------------------*/
+	var ctx = document.getElementById("users_stat");
+	var barchart1 = new Chart(ctx, {
+		type: 'bar',
+		
+		data: {
+			labels: [<?php foreach($user_rows as $user_row){ echo '"'.$user_row['month'],'",';} ?>],
+			datasets: [{
+				label: 'Users',
+				data: [<?php foreach($user_rows as $user_row){ echo $user_row['total_users'],',';} ?>],
+				backgroundColor: 'rgba(255, 206, 86, 0.2)',
+				borderColor: 'rgba(255, 206, 86, 1)',
+				borderWidth: 1
+			}]
+		},
+		options: {
+			scales: {
+				xAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Month'
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						autoSkip: false,
+						maxRotation: 0
+					},
+					ticks: {
+					  fontColor: "#000", // this here
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Total'
+					}
+				}]
+			},
+			title:{
+				display:true,
+				text:'Users (Monthly)'
+			},
+		}
+	});
+		
+})(jQuery); 
+  </script>
+  <div style="background-color:#fff;padding:5px;margin:5px;color:red;"><h3>Statistics &raquo; <?php echo titleCase($_SESSION['FON_G_COMPANY_NAME']); ?></h3></div>
+  <!-- Single pro tab start-->
+        <!-- income order visit user Start -->
+        <div class="income-order-visit-user-area">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                        <div class="income-dashone-total reso-mg-b-30">
+                            <div class="income-dashone-pro">
+                                <div class="income-rate-total">
+                                    <div class="price-edu-rate">
+                                        <h3><span class="counter"><?php echo $total_outgoing_sms; ?></span></h3>
+                                    </div>
+                                    <div class="price-graph">
+                                        <span id="sparkline1"></span>
+                                    </div>
+                                </div>
+                                <div class="income-range">
+                                    <p>SMS Sent</p>
+                                    <span class="income-percentange bg-green"><span class="counter"><?php echo $date; ?> </span> <i class="fa fa-calendar"></i>
+                                    </span>
+                                </div>
+                                <div class="clear"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                        <div class="income-dashone-total">
+                            <div class="income-dashone-pro">
+                                <div class="income-rate-total">
+                                    <div class="price-edu-rate">
+                                        <h3><span class="counter"><?php echo $total_sms; ?></span></h3>
+                                    </div>
+                                    <div class="price-graph">
+                                        <span id="sparkline6"></span>
+                                    </div>
+                                </div>
+                                <div class="income-range order-cl">
+                                    <p>SMS Received</p>
+                                    <span class="income-percentange bg-red"><span class="counter"><?php echo $date; ?></span> <i class="fa fa-calendar"></i>
+                                    </span>
+                                </div>
+                                <div class="clear"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                        <div class="income-dashone-total res-mg-t-30 res-tablet-mg-t-30 dk-res-t-pro-30">
+                            <div class="income-dashone-pro">
+                                <div class="income-rate-total">
+                                    <div class="price-edu-rate">
+                                        <h3><span class="counter"><?php echo $total_users; ?></span></h3>
+                                    </div>
+                                    <div class="price-graph">
+                                        <span id="sparkline2"></span>
+                                    </div>
+                                </div>
+                                <div class="income-range visitor-cl">
+                                    <p>Users</p>
+                                    <span class="income-percentange bg-blue"><span class="counter"><?php echo $date; ?></span> <i class="fa fa-calendar"></i>
+                                    </span>
+                                </div>
+                                <div class="clear"></div>
+                            </div>
+                        </div>
+                    </div>
+                  
+                </div>
+            </div>
+        </div><br/>
+         <div class="income-order-visit-user-area">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                        <div class="income-dashone-total reso-mg-b-30">
+                            <div class="income-dashone-pro">
+                                <div class="income-rate-total">
+                                    <div class="price-edu-rate">
+                                        <h3><span class="counter"><?php echo $active_count; ?></span></h3>
+                                    </div>
+                                    <div class="price-graph">
+                                        <span id="sparkline1"></span>
+                                    </div>
+                                </div>
+                                <div class="income-range">
+                                    <p>Active Users</p>
+                                    <span class="income-percentange bg-green"><span class="counter">5</span>% <i class="fa fa-level-up"></i>
+                                    </span>
+                                </div>
+                                <div class="clear"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                        <div class="income-dashone-total">
+                            <div class="income-dashone-pro">
+                                <div class="income-rate-total">
+                                    <div class="price-edu-rate">
+                                        <h3><span class="counter"><?php echo $inactive_count; ?></span></h3>
+                                    </div>
+                                    <div class="price-graph">
+                                        <span id="sparkline6"></span>
+                                    </div>
+                                </div>
+                                <div class="income-range order-cl">
+                                    <p>Inactive Users</p>
+                                    <span class="income-percentange bg-red"><span class="counter">6</span>% <i class="fa fa-level-up"></i>
+                                    </span>
+                                </div>
+                                <div class="clear"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                        <div class="income-dashone-total res-mg-t-30 res-tablet-mg-t-30 dk-res-t-pro-30">
+                            <div class="income-dashone-pro">
+                                <div class="income-rate-total">
+                                    <div class="price-edu-rate">
+                                        <h3><span class="counter"><?php echo $company_count; ?></span></h3>
+                                    </div>
+                                    <div class="price-graph">
+                                        <span id="sparkline2"></span>
+                                    </div>
+                                </div>
+                                <div class="income-range visitor-cl">
+                                    <p>Companies</p>
+                                    <span class="income-percentange bg-blue"><span class="counter">1</span>% <i class="fa fa-level-up"></i>
+                                    </span>
+                                </div>
+                                <div class="clear"></div>
+                            </div>
+                        </div>
+                    </div>
+                  
+                </div>
+            </div>
+        </div>
+        <!-- income order visit user End -->
+        <div class="dashtwo-order-area mg-tb-30">
+            <div class="container-fluid">
+                <div class="row">
+                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="responsive-mg-b-30" style="background-color:#fff;padding:5px;">
+                          
+                            <div id="basic-chart">
+                                <canvas id="sms_stat"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="responsive-mg-b-30" style="background-color:#fff;padding:5px;">
+                          
+                            <div id="bar1-chart">
+                                <canvas id="contacts_stat"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                
+                 
+                </div>
+            </div>
+        </div>
+        <!-- income order visit user End -->
+        <div class="dashtwo-order-area mg-tb-30">
+            <div class="container-fluid">
+                <div class="row">
+                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="responsive-mg-b-30" style="background-color:#fff;padding:5px;">
+                          
+                            <div id="basic-chart">
+                                <canvas id="short_code_stat"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="responsive-mg-b-30" style="background-color:#fff;padding:5px;">
+                          
+                            <div id="basic-chart">
+                                <canvas id="users_stat"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                
+                 
+                </div>
+            </div>
+        </div>
+            <!-- income order visit user End -->
+        <div class="dashtwo-order-area mg-tb-30">
+            <div class="container-fluid">
+                <div class="row">               
+                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="charts-single-pro responsive-mg-b-30">
+                          
+                            <div id="pie-chart">
+                                <canvas id="products_stat"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                
+                 
+                </div>
+            </div>
+        </div>
+     
+        

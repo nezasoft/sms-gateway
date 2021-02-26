@@ -1,0 +1,511 @@
+<?php
+ //Make a connection
+include("../../connect/connect.php");
+//Get all contacts
+$contacts =$conn->prepare("SELECT contact_name, mobile_no FROM contacts WHERE company_id='".$_SESSION['FON_G_COMPANY_ID']."' ORDER BY contact_name ASC");
+$contacts->execute();
+$contact_rows = $contacts->fetchAll(PDO::FETCH_ASSOC);
+//get all groups
+$groups = $conn->prepare("SELECT id AS group_id, group_name FROM groups WHERE company_id='".$_SESSION['FON_G_COMPANY_ID']."' ORDER BY group_name ASC");
+$groups->execute();
+$group_rows = $groups->fetchAll(PDO::FETCH_ASSOC);
+
+//Get all schedules
+$schedules = $conn->prepare("SELECT s.id AS schedule_id,f.id AS frequency_id,s.schedule_name,start_date,end_date,schedule_time,f.frequency_name FROM schedules AS s LEFT JOIN frequency AS f ON f.id = s.frequency_id WHERE s.company_id='".$_SESSION['FON_G_COMPANY_ID']."' ORDER BY s.schedule_name ASC");
+$schedules->execute();
+$schedule_rows = $schedules->fetchAll(PDO::FETCH_ASSOC);
+?>
+<style>
+.jp-multiselect {display:table;}
+.jp-multiselect select {width:100%; font-size:12px; min-height:180px;}
+.jp-multiselect .from-panel {float:left; padding:10px; width:40%;min-width:180px}
+.jp-multiselect .from-panel option {width:100%; display:block;}
+.jp-multiselect .move-panel {float:left;   width:8%; margin-top:40px; margin-right:5px; margin-left:5px;}
+.jp-multiselect .to-panel {float:left;  padding:10px; width:40%;min-width:180px}
+.jp-multiselect .to-panel option {width:100%; display:block;}
+.jp-multiselect .control-panel {float:left; width:8%; margin-top:40px;}  
+</style> 
+<script>
+
+(function ($) {
+    $.fn.jQueryMultiSelection = function(options) {
+        
+        var thisEle = this;
+        var _opts = $.extend({
+                        enableDynamicAddContent : false,
+                        ajaxSourceUrl           : "../list.json",
+                        btnGetJson              : "#btn-ajax",
+                        selectMeunFrom          : ".from-panel select",
+                        selectMeunTo            : ".to-panel select",
+                        
+                        btnMoveAllRight         : ".btn-move-all-right",
+                        btnMoveSelectedRight    : ".btn-move-selected-right",
+                        btnMoveAllLeft          : ".btn-move-all-left",
+                        btnMoveSelectedLeft     : ".btn-move-selected-left",
+                        btnDelete               : ".btn-delete",
+                        btnMoveUp               : ".btn-up",
+                        btnMoveDown             : ".btn-down",
+                        
+                        htmlMoveAllRight        : "&rsaquo;&rsaquo;",
+                        htmlMoveSelectedRight   : "&rsaquo;",
+                        htmlMoveAllLeft         : "&lsaquo;&lsaquo;",
+                        htmlMoveSelectedLeft    : "&lsaquo;",
+                        htmlDelete              : "Delete",
+                        htmlMoveUp              : "Up",
+                        htmlMoveDown            : "Down",
+                    }, options);
+        
+        jQueryMultiSelection = {
+            init: function(){
+                setInterface();
+                setDeleteBtnListener();
+                setUpBtnListener();
+                setDownBtnListener();
+                setMoveBtnsListener();
+                if(_opts.enableDynamicAddContent) setAjaxBtnListener();
+            }
+        };
+        
+        function setInterface(){
+            $(_opts.btnMoveAllRight).html(_opts.htmlMoveAllRight);
+            $(_opts.btnMoveSelectedRight).html(_opts.htmlMoveSelectedRight);
+            $(_opts.btnMoveAllLeft).html(_opts.htmlMoveAllLeft);
+            $(_opts.btnMoveSelectedLeft).html(_opts.htmlMoveSelectedLeft);
+            $(_opts.btnDelete).html(_opts.htmlDelete);
+            $(_opts.btnMoveUp).html(_opts.htmlMoveUp);
+            $(_opts.btnMoveDown).html(_opts.htmlMoveDown);
+        }
+        
+        function setDeleteBtnListener(){
+            $(_opts.btnDelete).click( function () { 
+                $(this).parent().prev().find("select option:selected").each(function(){
+                    $(this).remove();
+                });
+            });
+        }
+        
+        function setUpBtnListener(){
+            $(_opts.btnMoveUp).click( function () { 
+                $(this).parent().prev().find("select option:selected").each(function(){
+                    var options = $(this).parent().find("option");
+                    var newPos  = options.index(this) - 1;
+                    if (newPos > -1) {
+                        options.eq(newPos).before("<option value='"+$(this).val()+"' selected='selected'>"+$(this).text()+"</option>");
+                        $(this).remove();
+                    }
+                });
+            });
+        }
+        
+        function setDownBtnListener(){
+            $(_opts.btnMoveDown).click( function () { 
+                $(this).parent().prev().find("select option:selected").each(function(){
+                    var options = $(this).parent().find("option");
+                    var newPos  = options.index(this) + 1;
+                    if (newPos < options.size()) {
+                        options.eq(newPos).after("<option value='"+$(this).val()+"' selected='selected'>"+$(this).text()+"</option>");
+                        $(this).remove();
+                    }
+                });
+            });
+        }
+        
+        function setMoveBtnsListener(){
+            $(_opts.btnMoveAllRight).click(function(){ _multiTransfer(this, true, true)});
+            $(_opts.btnMoveSelectedRight).click(function(){ _multiTransfer(this, false, true)});
+            $(_opts.btnMoveAllLeft).click(function(){ _multiTransfer(this, true, false)});
+            $(_opts.btnMoveSelectedLeft).click(function(){_multiTransfer(this, false, false)});
+        }
+        
+        function _multiTransfer(btnEle, isAll, isToRight){
+            var nextList = $(btnEle).parent().next().find("select");
+            var prevList = $(btnEle).parent().prev().find("select");
+            var fromList = isToRight ? prevList: nextList;
+            var toList   = isToRight ? nextList: prevList;
+            var selector = isAll     ? fromList.find("option"): fromList.find("option:selected");
+            
+            selector.each(function() {
+                $(this).remove();
+                toList.append($(this));
+            });
+        }
+        
+        function setAjaxBtnListener(){
+            $(_opts.btnGetJson).one( "click", function() {
+                var thisBtnEle = $(this);
+                $.ajax({
+                    url: _opts.ajaxSourceUrl,
+                    dataType: "json",
+                    data: { format: "json"},
+                    success: function( response ) {
+                        var tempStr = "";
+                        var jsonItemsSize = Object.size(response);
+                        for(var i =0; i<jsonItemsSize; i++){
+                            tempStr += '<option title="'+i+'" value="'+response[i].value+'">'+response[i].text+"</option>";
+                        }
+                        thisEle.find(_opts.selectMeunFrom).append(tempStr);
+                    },
+                    complete:function(){},
+                    error: function(  jqXHR,textStatus,errorThrown ) {}
+                });
+            });
+        }
+        
+        Object.size = function(obj) {
+            var size = 0, key;
+            for (key in obj) { if (obj.hasOwnProperty(key)) size++; }
+            return size;
+        };
+
+        jQueryMultiSelection.init();
+        
+    };
+}( jQuery ));
+</script> 
+<div style="background-color:#fff;padding:5px;">
+<div id="form_content" style=" margin-left:10px;margin-right:10px;margin-top:5px;">
+<div class="modal-header header-color-modal bg-color-1">
+<h4 class="modal-title">Send Bulk Message </h4>  
+
+
+ </div><br/>
+ <a href="#" class="btn btn-info" id="send_message_group_link">Send to Group</a> <a href="#" class="btn btn-success" id="send_message_contacts_link">Send to Contacts</a> <a href="#" class="btn btn-warning" id="schedule_messages_link">Schedule Message</a> <br/><br/>
+ <script>
+ $("#send_message_group_link").click(function(){
+  $("#form_section").hide();
+  $("#group_section").show();
+  $("#schedule_section").hide();
+ });
+  $("#send_message_contacts_link").click(function(){
+  $("#form_section").show();
+  $("#group_section").hide();
+  $("#schedule_section").hide();
+  });
+  $("#schedule_messages_link").click(function(){
+  $("#schedule_section").show();
+  $("#group_section").hide();
+  $("#form_section").hide();
+  });
+ </script>
+ <div id="form_section">
+ <div class="alert alert-info">
+ <p> Note: Only selected/highlighted contacts in the recepient list will be sent message(s). To select ALL or multiple contacts hold down SHIFT button to select a range of contacts and CNTRL button to select single random contacts.</p>                                  
+  </div> 
+       <div class="jp-multiselect">
+            <div class="from-panel">
+            <label>Contacts List:</label>
+                <select name="from[]" class="form-control" size="8" multiple="multiple">
+                <?php foreach($contact_rows as $contact_row){ ?>
+                    <option value="<?php echo $contact_row['mobile_no'];?>"><?php echo titleCase($contact_row['contact_name']).'--'.$contact_row['mobile_no'];?></option>
+                  <?php } ?>  
+                </select>
+            </div>
+            <div class="move-panel">
+            
+                <button type="button" style="margin-top:5px;" class="btn-move-all-right btn-primary btn-round "></button>
+                <button type="button" style="margin-top:5px;" class="btn-move-selected-right btn-primary btn-round "></button>
+                <button type="button" style="margin-top:5px;" class="btn-move-all-left btn-primary btn-round " ></button>
+                <button type="button" style="margin-top:5px;" class="btn-move-selected-left btn-primary btn-round "></button>
+            </div>
+            <div class="to-panel">
+            <label>Recepients List:</label>
+                <select name="to[]" class="form-control" id="contacts" size="8" multiple="multiple">
+                </select>
+                <div style="color:red;" class="contact_error">*Select contact</div>
+            </div>
+            <div class="control-panel">
+                <button type="button" style="margin-top:5px;" class="btn-delete btn-danger btn-round btn-xs"></button>
+                <button type="button" style="margin-top:5px;"  class="btn-up btn-success btn-round btn-xs"></button>
+                <button type="button" style="margin-top:5px;"  class="btn-down btn-info btn-round btn-xs"></button>
+            </div>
+        </div>
+        <strong>Message:</strong>
+          <div  class="form-group edit-ta-resize res-mg-t-15">
+           <textarea maxlength="160"   name="message" id="message_text"></textarea>
+           <div style="color:red;" class="message_error">*Enter message</div>
+            <div style="color:red; font-weight:bolder;"  id="char_count"></div>
+           </div>
+         <button id="send_message" class="btn btn-success"><i class="fa fa-send"></i> Send Message</button> 
+         <a id="loader"><img src="../img/loader.gif" width="40" height="40" />Sending...</a> <br/>
+         </div>
+         <div id="response"></div> <br/>
+	     </div>
+	
+        <script>
+        $(".jp-multiselect").jQueryMultiSelection();    
+        $(document).ready(function(){
+		$("#schedule_section").hide();
+		$("#group_section").hide();
+        $("#loader").hide();
+        $(".message_error").hide();
+        $(".contact_error").hide();
+        var text_max = 160;
+        $("#char_count").html(text_max + ' characters remaining');
+        $("#message_text").keyup(function() {
+        var text_length = $("#message_text").val().length;
+        var text_remaining = text_max - text_length;
+        $("#char_count").html(text_remaining + " characters remaining");
+        });
+	  	//Character count for group message
+		  $("#char_count_group").html(text_max + ' characters remaining');
+        $("#message_text_group").keyup(function() {
+        var text_length = $("#message_text_group").val().length;
+        var text_remaining = text_max - text_length;
+        $("#char_count_group").html(text_remaining + " characters remaining");
+        });
+		
+		//Character count for sheduled message
+		$("#char_count_schedule").html(text_max + ' characters remaining');
+        $("#message_text_schedule").keyup(function() {
+        var text_length = $("#message_text_schedule").val().length;
+        var text_remaining = text_max - text_length;
+        $("#char_count_schedule").html(text_remaining + " characters remaining");
+        });
+        //Send Message click event
+        $("#send_message").click(function(e){
+        e.preventDefault();
+        $("#response").empty();
+        contacts = $("#contacts").val();
+        sms_message = $("#message_text").val();
+        error = false;
+        
+        
+        if(sms_message===''){
+        error = true;
+        $(".message_error").show();
+        $("#message_text").css("border-color","red");
+        $("#message_text").focus();
+        }else{
+        $("#message_text").css("border-color","green");
+        $(".message_error").hide();
+        }
+        
+        if(contacts===null){
+        error = true;
+        $(".contact_error").show();
+        $("#contacts").css("border-color","red");
+        $("#contacts").focus();
+        }else{
+        $("#contacts").css("border-color","green");
+        $(".contact_error").hide();
+        }
+        
+        //Send request to server for processing if no errors
+			if(error == false){
+			//Hide Button
+			$("#send_message").hide();
+			//Show loader
+			$("#loader").show();
+			myData = "message=" + sms_message + "&contacts=" + contacts;
+			jQuery.ajax({
+			type: "POST",
+			url: "../process/sendSMS.php",
+			dataType: "text",
+			data: myData,
+			success: function(b) {
+			$("#response").append(b);
+			$("#loader").hide();
+			$("#send_message").show();
+			$("#response").show();
+			}
+			});
+
+			}
+        
+        });
+        });
+       </script>
+<div id="group_section" >
+    <strong>Message Group:</strong>
+   <div  class="form-group edit-ta-resize res-mg-t-15">
+   <select class="form-control" id="group" name="group">
+   <option value="">--None--</option>
+   <?php foreach($group_rows as $group_row){ ?>
+   <?php echo "<option value=".$group_row['group_id'].">".$group_row['group_name']."</option>"; ?>
+   <?php } ?>
+   
+   </select>
+   <div style="color:red;" class="group_error">*Select group</div>
+   <strong>Message:</strong>
+          <div  class="form-group edit-ta-resize res-mg-t-15">
+           <textarea maxlength="160"   name="message_group" id="message_text_group"></textarea>
+           <div style="color:red;" class="message_group_error">*Enter message</div>
+            <div style="color:red; font-weight:bolder;"  id="char_count_group"></div>
+           </div>
+   
+
+</div>
+<button id="send_message_group" class="btn btn-info"><i class="fa fa-send"></i> Send Message</button> 
+<a id="loader_group"><img src="../img/loader.gif" width="40" height="40" />Sending...</a> <br/>  
+
+ <div id="response_group"></div> <br/>
+</div>
+
+<div id="schedule_section" >
+    <strong>Schedule:</strong>
+   <div  class="form-group edit-ta-resize res-mg-t-15">
+   <select class="form-control" id="schedule" name="schedule">
+   <option value="">--None--</option>
+   <?php foreach($schedule_rows as $schedule_row){ ?>
+   <?php echo "<option value=".$schedule_row['schedule_id'].">".$schedule_row['schedule_name']."--".$schedule_row['frequency_name']."-- Start Date(".$schedule_row['start_date'].") -- End Date (".$schedule_row['end_date'].")</option>"; ?>
+   <?php } ?>
+   
+   </select>
+   <strong>Group:</strong>
+   <div  class="form-group edit-ta-resize res-mg-t-15">
+   <select class="form-control" id="s_group" name="s_group">
+   <option value="">--None--</option>
+   <?php foreach($group_rows as $group_row){ ?>
+   <?php echo "<option value=".$group_row['group_id'].">".$group_row['group_name']."</option>"; ?>
+   <?php } ?>   
+   </select>
+   <div style="color:red;" class="s_group_error">*Select group</div>
+   <strong>Message:</strong>
+          <div  class="form-group edit-ta-resize res-mg-t-15">
+           <textarea maxlength="160"   name="message_schedule" id="message_text_schedule"></textarea>
+           <div style="color:red;" class="message_schedule_error">*Enter message</div>
+            <div style="color:red; font-weight:bolder;"  id="char_count_schedule"></div>
+           </div>
+   
+
+</div>
+<button id="send_message_schedule" class="btn btn-warning"><i class="fa fa-send"></i> Schedule Message</button> 
+<a id="loader_schedule"><img src="../img/loader.gif" width="40" height="40" />Sending...</a> <br/>  
+
+ <div id="response_schedule"></div> <br/>
+</div>
+
+	 
+<script>
+$(document).ready(function(){
+$(".group_error").hide();
+$(".s_group_error").hide();
+$(".schedule_error").hide();
+$("#loader_group").hide();
+$("#loader_schedule").hide();
+$(".message_group_error").hide();
+$(".message_schedule_error").hide();
+
+//Send Message click event
+$("#send_message_group").click(function(e){
+e.preventDefault();
+$("#response_group").empty();
+group_sms_message = $("#message_text_group").val();
+group = $("#group").val();
+error = false;
+                
+if(group===''){
+error = true;
+$(".group_error").show();
+$("#group").css("border-color","red");
+$("#group").focus();
+}else{
+$("#group").css("border-color","green");
+$(".group_error").hide();
+}
+
+if(group_sms_message===''){
+error = true;
+$(".message_group_error").show();
+$("#message_text_group").css("border-color","red");
+$("#message_text_group").focus();
+}else{
+$("#message_text_group").css("border-color","green");
+$(".message_group_error").hide();
+}
+
+//Send request to server for processing if no errors
+if(error == false){
+//Hide Button
+$("#send_message_group").hide();
+//Show loader
+$("#loader_group").show();
+
+myData = "message_group=" + group_sms_message + "&group=" + group;
+
+jQuery.ajax({
+type: "POST",
+url: "../process/sendSMSGroup.php",
+dataType: "text",
+data: myData,
+success: function(b) {
+$("#response_group").append(b);
+$("#loader_group").hide();
+$("#send_message_group").show();
+$("#response_group").show();
+}
+});
+}
+
+
+});
+
+
+//Schedule Message
+$("#send_message_schedule").click(function(e){
+e.preventDefault();
+$("#response_schedule").empty();
+schedule_sms_message = $("#message_text_schedule").val();
+schedule = $("#schedule").val();
+group = $("#s_group").val();
+error = false;
+                
+if(schedule===''){
+error = true;
+$(".schedule_error").show();
+$("#schedule").css("border-color","red");
+$("#schedule").focus();
+}else{
+$("#schedule").css("border-color","green");
+$(".schedule_error").hide();
+}
+
+if(group===''){
+error = true;
+$(".s_group_error").show();
+$("#s_group").css("border-color","red");
+$("#s_group").focus();
+}else{
+$("#s_group").css("border-color","green");
+$(".s_group_error").hide();
+}
+
+if(schedule_sms_message===''){
+error = true;
+$(".message_schedule_error").show();
+$("#message_text_schedule").css("border-color","red");
+$("#message_text_schedule").focus();
+}else{
+$("#message_text_schedule").css("border-color","green");
+$(".message_schedule_error").hide();
+}
+
+//Send request to server for processing if no errors
+if(error == false){
+//Hide Button
+$("#send_message_schedule").hide();
+//Show loader
+$("#loader_schedule").show();
+
+myData = "message_schedule=" + schedule_sms_message + "&schedule=" + schedule + "&group=" + group;
+
+jQuery.ajax({
+type: "POST",
+url: "../process/schedule_sms.php",
+dataType: "text",
+data: myData,
+success: function(b) {
+$("#response_schedule").append(b);
+$("#loader_schedule").hide();
+$("#send_message_schedule").show();
+$("#response_schedule").show();
+}
+});
+}
+
+
+});
+});
+		
+</script>
+

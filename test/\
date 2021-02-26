@@ -1,0 +1,84 @@
+<?php
+date_default_timezone_set("Africa/Nairobi");
+ini_set("soap.wsdl_cache_enabled","0");
+include("../connect/connect.php");
+$SPID = '601957';//Service provider ID
+$real_pass = '#Fon789S';//Service provider password
+$serviceId = $service_id;//Service ID
+$timestamp= date("YmdHis");
+$password = md5($SPID.$real_pass.$timestamp);
+$criteria =$row['keyword'];
+$endpoint = 'http://192.168.20.230/gateway/notify/sendsms/short_code/';
+$sender_name ='40975';
+$sender ='tel:254724802834';
+$link = '10180321075700630925';
+$response_message ='Thank you for staying tuned to EBRU Tv.';
+
+
+ //Lets Generate the Correlator for this request
+   function generateRandomString($length = 15) {
+    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $charactersLength = strlen($characters);
+    $randomString = '';
+    for($i = 0; $i < $length; $i++) {
+        $randomString .= $characters[rand(0, $charactersLength - 1)];
+    }
+    return $randomString;
+   }
+   $correlator = 'FON'.generateRandomString(); 
+ //Lets invoke the sendSMS Method on the SDP Platform and to deliver the message to the subscriber/'s handset
+ $data = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v2="http://www.huawei.com.cn/schema/common/v2_1"
+	xmlns:loc="http://www.csapi.org/schema/parlayx/sms/send/v2_2/local">
+	<soapenv:Header>
+		<v2:RequestSOAPHeader>
+			<v2:spId>'.$SPID.'</v2:spId>
+			<v2:spPassword>'.$password.'</v2:spPassword>
+			<v2:serviceId>'.$serviceId.'</v2:serviceId>
+			<v2:timeStamp>'.$timestamp.'</v2:timeStamp>
+			<!--mandatory if service is on-demand-->
+			<v2:linkid>'.$linkid.'</v2:linkid>
+		</v2:RequestSOAPHeader>
+	</soapenv:Header>
+	<soapenv:Body>
+		<loc:sendSms>
+			<!--1 or more repetitions:-->
+			<loc:addresses>tel:'.$sender.'</loc:addresses>
+			<!--Optional:-->
+			<loc:senderName>'.$sender_name.'</loc:senderName>
+			<loc:message>'.$response_message.'</loc:message>
+			<!--Optional:-->
+			<loc:receiptRequest>
+				<endpoint>'.$endpoint.'</endpoint>
+				<interfaceName>SmsNotification</interfaceName>
+				<correlator>'.$correlator.'</correlator>
+			</loc:receiptRequest>
+		</loc:sendSms>
+	</soapenv:Body>
+</soapenv:Envelope>';
+//sleep for 10 seconds before responding again to the SDP
+sleep(10);
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, "http://10.66.49.147:8310/SendSmsService/services/SendSms");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_USERPWD, "");
+curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: text/xml; charset=utf-8", "Content-Length: " . strlen($data)));
+$response = curl_exec($ch); 
+curl_close($ch);
+//converting
+$response = str_replace("<soap:Body>","",$response);
+$response = str_replace("</soap:Body>","",$response);
+
+//Loads the XML
+$xml = simplexml_load_string($response);   
+// Grabs the items in the response 
+$items = $xml->children('soapenv', true)->Body->children('ns1', true)->sendSmsResponse; 
+// Take the response and generate some mark up              
+foreach($items as $item){
+$request_identifier = $item->result;
+echo $request_identifier."</br>";
+}
+
+?>

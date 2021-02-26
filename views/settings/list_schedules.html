@@ -1,0 +1,466 @@
+<style>
+
+.bsdatepicker {
+    top: 0;
+    left: 0;
+    margin-top: 1px;
+    z-index: 1060;
+    padding: 4px!important
+   
+}
+
+.bsdatepicker:before {
+    position: absolute;
+    top: -7px;
+    left: 6px;
+    display: inline-block;
+    content: '';
+    border-right: 7px solid transparent;
+    border-bottom: 7px solid transparent;
+    border-bottom-color: transparent;
+    border-left: 7px solid transparent
+}
+
+.bsdatepicker:after {
+    position: absolute;
+    top: -6px;
+    left: 7px;
+    display: inline-block;
+    content: '';
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid #fff;
+    border-left: 6px solid transparent
+}
+
+.bsdatepicker>div {
+    display: none
+}
+
+.bsdatepicker table {
+    width: 100%;
+    margin: 0
+}
+
+.bsdatepicker td,
+.bsdatepicker th {
+    width: 20px;
+    height: 20px;
+    margin: 3px;
+    text-align: center
+}
+
+.bsdatepicker td.day:hover {
+    cursor: pointer
+}
+
+.bsdatepicker td.day.disabled {
+    color: #eee
+}
+
+.bsdatepicker td.new,
+.bsdatepicker td.old {
+    color: #999
+}
+
+.bsdatepicker td span {
+    line-height: 44px;
+    display: block;
+    float: left;
+    width: 54px;
+    height: 44px;
+    margin: 2px;
+    cursor: pointer
+}
+
+.bsdatepicker td span.old {
+    color: #999
+}
+
+.bsdatepicker th.switch {
+    width: 145px
+}
+
+.bsdatepicker th.next,
+.bsdatepicker th.prev {
+    font-size: 21px
+}
+
+.bsdatepicker thead tr:first-child th {
+    cursor: pointer
+}
+
+.input-append.date .add-on i,
+.input-prepend.date .add-on i {
+    display: block;
+    width: 16px;
+    height: 16px;
+    cursor: pointer
+}
+</style>
+
+
+
+
+<script type="text/javascript" src="../js/api/datepicker.js"></script>
+<script type="text/javascript">$(function(){$(".bootstrap-datepicker").bsdatepicker({format:"yyyy-mm-dd"})});</script>
+<script type="text/javascript" src="../js/api/timepicker.js"></script>
+<script type="text/javascript">$(function(){$(".timepicker-example").timepicker({timeFormat:"H:i:s"})});</script>
+
+
+
+
+
+<?php
+
+include("../../connect/connect.php");
+//Get frequencies
+$freq = $conn->prepare("SELECT id AS freq_id, frequency_name FROM frequency ORDER BY frequency_name ASC");
+$freq->execute();
+$freq_rows = $freq->fetchAll(PDO::FETCH_ASSOC);
+
+?>
+<div style="background-color:#fff;padding:5px;">
+<div style="margin:10px;">
+<div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+<div class="breadcome-heading">
+<form role="search" class="sr-input-func">
+<input type="text" id="suggest_group" placeholder="Search..." class="search-int form-control">
+<a href="#"><i class="fa fa-search"></i></a>
+</form>
+</div>
+</div>
+
+<div class="button-ap-list responsive-btn">
+<div class="btn-group btn-custom-groups btn-custom-groups-one btn-mg-b-10">
+<button style="margin-right:30px;" type="button" id="add_new_short_code" class="btn btn-primary" data-toggle="modal" data-target="#PrimaryModalhdbgcl"><i class="fa fa-plus-square " aria-hidden="true"></i> Add Schedule</button>
+<select name="filter"  class="form-control" style="width:100px;margin-right:50px;" id="filter">
+<option selected value="">Default</option>
+<option   value="50">50</option>
+<option value="100">100</option>
+<option value="200">200</option>
+</select>
+</div>
+</div>
+</div><hr/>
+<script type="text/javascript">
+        //lets have a function to auto suggest searches invoices
+        $(document).ready(function(){
+	   $('#loader_suggest').hide();
+        $('#suggest_list').hide();
+        $('#suggest_list_div').hide();      
+        $("#suggest_schedule").keyup(function(e){
+            e.preventDefault(); 
+           $('#loader_suggest').show();			
+            //hide table data
+            $("#table_content_section").hide();
+            //hide pagination
+            $("#paginated_data").hide();
+            //hide records found
+            $("#rec_found").hide();
+            var min_length = 1; // min caracters to display the autocomplete
+            var keyword = $('#suggest_schedule').val();
+            if (keyword.length >= min_length) {
+                $.ajax({
+                    url: '../process/suggest_schedule.php',
+                    type: 'POST',
+                    data: {keyword:keyword},
+                    success:function(data){
+		       $('#loader_suggest').hide();
+                        //show suggestions
+                        $('#suggest_list_div').show();
+                        $('#suggest_list').show();
+                        $('#suggest_list').html(data);
+						
+                    }
+                });
+            }else{
+	    $('#loader_suggest').hide();
+                //hide suggestions
+                $('#suggest_list').hide();
+                $('#suggest_list_div').hide();
+                //show table data
+                getdata(1);
+                $("#table_content_section").show();
+                //show pagination
+                $("#paginated_data").hide();
+                //show records found
+                $("#rec_found").show();
+            }
+
+        });
+       function selectItem(val) {
+		$("#suggest_schedule").val(val);
+		$("#suggest_list_div").hide();
+		}
+        function set_item(item) {
+            // change input value
+            $('#suggest_group').val(item);
+            // hide proposition list
+            $('#suggest_schedule').hide();
+        }
+    });
+    $(document).keypress(
+     function(event){
+     if(event.which == '13') {
+     event.preventDefault();
+     }
+   });
+</script>
+
+<div id="PrimaryModalhdbgcl" class="modal modal-edu-general default-popup-PrimaryModal fade" role="dialog">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+							
+								<div id="form_content">
+                                    <div class="modal-header header-color-modal bg-color-1">
+                                        <h4 class="modal-title">Add  Schedule</h4>                                    
+                                    </div>
+                                    <div class="modal-close-area modal-close-df">
+				     							 <a class="close" data-dismiss="modal" href="#"><i class="fa fa-close"></i></a>
+				                        </div> 
+                                 <br/>                                   
+                                 <div class="alert alert-info">Note: Schedules are used to schedule sending of messages using a specific pre-defined creteria.</div>                           
+                                    <div class="modal-body"> 
+                                 									
+                                          <div class="form-group-inner">
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Schedule Name</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="text" class="form-control" name="schedule_name" id="schedule_name"/> 
+																<span class="schedule_name_error"><font color="red">* Enter schedule name </font></span>
+                                                            </div>
+                                                        </div>
+														<div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Frequency</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <select id="frequency" class="form-control" name="frequency">
+																 <option value="">--Select--</option>
+																 <?php
+																 foreach($freq_rows as $freq_row){
+																 echo "<option value='".$freq_row['freq_id']."'>".$freq_row['frequency_name']."</option>";
+																 }
+																 
+																 ?>
+																</select>
+																<span class="frequency_error"><font color="red">* Select frequency </font></span>
+                                                            </div>
+                                                        </div><br/>
+														
+												
+														<div class="row">
+                                                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                                <label class="login2 pull-right pull-right-pro">Schedule Time</label>
+                                                            </div>
+                                                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                                                                <input type="text" class="form-control timepicker-example " name="schedule_time" id="schedule_time"/> 
+																<span class="schedule_time_error"><font color="red">* Select schedule time </font></span>
+                                                            </div>
+                                                        </div>
+														
+                                          
+										             <div class="row">
+													 <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+															<label class="login2 pull-right pull-right-pro">Start Date</label>
+															</div>
+															<div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">																												
+																 <input type="text" class="form-control bootstrap-datepicker " value="<?php echo date('Y-m-d'); ?>" name="start_date" id="start_date"/> 
+																 <span class="start_date_error"><font color="red">* Select start date </font></span>
+															</div>
+														</div><br/>
+														<div class="row">
+														   <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+															<label class="login2 pull-right pull-right-pro">End Date</label>
+															</div>
+															<div class="col-lg-9 col-md-9 col-sm-9 col-xs-12 date">
+															
+															
+																 <input type="text" class="form-control bootstrap-datepicker" value="<?php echo date('Y-m-d'); ?>" name="end_date" id="end_date"/> 
+																 <span class="end_date_error"><font color="red">* Select end date </font></span>
+															</div>
+														</div><br/>
+
+													  
+														   <div class="row">
+														   <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+														   <label class="login2 pull-right pull-right-pro">Status</label>
+														   </div>
+														   <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+														   <select class="form-control" id="status" name="status">
+														   <option value="1">Active</option>
+														   <option value="0">In-active</option>
+														   </select>
+														   </div>
+														   </div>
+														   <div style="margin:5px; padding:5px;">
+														<a id="loader"><img src="../img/loader.gif" width="50" height="50" /></a>                                                                         
+														<a href="#" class="btn btn-primary" id="save">Save</a>
+														</div>
+													</div>
+                                          										  
+                                    </div> 
+                                  </div>									
+									<div style="margin:10px; padding:10px;" id="response"></div>																			
+                                </div>
+                            </div>
+                        </div>
+
+<script>
+
+$(document).ready(function(){  
+$("#loader").hide();
+$(".schedule_name_error").hide();
+$(".frequency_error").hide();
+$(".schedule_time_error").hide();
+$(".start_date_error").hide();
+$(".end_date_error").hide();
+$(".status_error").hide();
+$("#save").click(function(){
+$("#response").empty();
+
+schedule_name = $("#schedule_name").val();
+frequency = $("#frequency").val();
+schedule_time = $("#schedule_time").val();
+start_date = $("#start_date").val();
+end_date = $("#end_date").val();
+status = $("#status").val();
+
+error = false;
+if(schedule_name==''){
+$(".schedule_name_error").show();
+$("#schedule_name").css("border-color","red");
+error = true;
+}else{
+$(".schedule_name_error").hide();
+$("#schedule_name").css("border-color","green");
+}
+
+if(frequency==''){
+$(".frequency_error").show();
+$("#frequency").css("border-color","red");
+error = true;
+}else{
+$(".frequency_error").hide();
+$("#frequency").css("border-color","green");
+}
+
+if(schedule_time===''){
+$(".schedule_time_error").show();
+$("#schedule_time").css("border-color","red");
+error = true;
+}else{
+$(".schedule_time_error").hide();
+$("#schedule_time").css("border-color","green");
+}
+
+if(start_date===''){
+$(".start_date_error").show();
+$("#start_date").css("border-color","red");
+error = true;
+}else{
+$(".start_date_error").hide();
+$("#start_date").css("border-color","green");
+}
+
+if(end_date===''){
+$(".end_date_error").show();
+$("#end_date").css("border-color","red");
+error = true;
+}else{
+$(".end_date_error").hide();
+$("#end_date").css("border-color","green");
+}
+
+if(status===''){
+$(".status_error").show();
+$("#status").css("border-color","red");
+error = true;
+}else{
+$(".status_error").hide();
+$("#status").css("border-color","green");
+}
+
+//Send request to server for processing if no erros
+if(error == false){
+//Hide Button
+$("#save").hide();
+//Show loader
+$("#loader").show();
+
+myData = "schedule_name=" + schedule_name + "&frequency=" + frequency + "&end_date=" + end_date  +  "&schedule_time=" + schedule_time  + "&start_date=" + start_date + "&status=" + status;
+jQuery.ajax({
+type: "POST",
+url: "../process/add_schedule.php",
+dataType: "text",
+data: myData,
+success: function(b) {
+$("#response").append(b);
+$("#loader").hide();
+$("#save").show();
+$("#response").show();
+}
+});
+}
+});
+});
+</script>
+<div id="suggest_list_div"><ul id="suggest_list"></ul></div><br/>
+<div id="loader_suggest"><img src="../img/loader.gif" width="30" height="30" /><h5>Searching...</h5></div>
+<div id="table_content_section">
+<h4>Groups</h4><hr/>
+<div id="loader_schedule_1"><img src="../img/loader.gif" width="40" height="40" /><h4>Loading data, please wait...</h4></div>           
+<div id="schedule_data"></div>
+</div>
+</div>			
+			<script>
+			$(document).ready(function(){
+                $("#loader_schedule_1").hide();			
+				getdata(1);
+				function getdata(pageno){
+				$("#loader_schedule_1").show();
+				// source of data	
+				var myData = 'page=' + pageno;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "../views/settings/loads/schedules.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#schedule_data").html(response);
+			     $("#loader_schedule_1").hide();
+                 }
+			 });
+			}		
+								
+			//filter change event
+			$("#filter").change(function(){
+			$("#schedule_data_1").empty();
+			filter_val = $("#filter").val();
+			pageno = 1;
+			$("#loader_schedule_1").show();
+				// source of data	
+				var myData = 'page=' + pageno + '&filter=' + filter_val;
+				 jQuery.ajax({
+				 type: "GET", // Post / Get method
+				 url: "../views/settings/loads/schedules.php", //Where form data is sent on submission
+				 dataType:"text", // Data type, HTML, json etc.
+				 data:myData, //Form variables
+				 success:function(response){
+				 $("#schedule_data").html(response);
+			     $("#loader_schedule_1").hide();
+                 }
+				});
+			});
+		});	
+			
+</script>
+
+						
+						
+
+
+
+
